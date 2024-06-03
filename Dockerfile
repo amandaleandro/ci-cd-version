@@ -18,3 +18,4 @@ EXPOSE 8080
 
 # Comando para iniciar a aplicação
 CMD ["node", "app.js"]
+# Path: versionamento/Dockerfile
