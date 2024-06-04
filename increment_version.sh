@@ -1,14 +1,8 @@
 #!/bin/bash
 
-# Verifica se há commits no repositório
-if [ "$(git rev-list --count HEAD)" -eq 0 ]; then
-  echo "Não há commits no repositório."
-  exit 1
-fi
-
-# Verifica se há alterações no repositório
-if ! git diff-index --quiet HEAD --; then
-  echo "Existem alterações no repositório. Criando nova versão..."
+# Verifica se há alterações pendentes no repositório
+if ! git diff --quiet; then
+  echo "Há alterações pendentes no repositório. Uma nova versão será criada."
 
   # Obtém a versão mais recente da tag
   latest_tag=$(git describe --tags --abbrev=0)
@@ -40,12 +34,6 @@ if ! git diff-index --quiet HEAD --; then
 
   # Aqui você pode criar a tag com a nova versão
   # git tag "$new_version"
-  # git config --local user.email "action@github.com"
-  # git config --local user.name "GitHub Action"
-  # git commit -am "Bump version"
-  # git push
 else
   echo "Não há alterações no repositório. Nenhuma nova versão será criada."
 fi
-
-exit 0
