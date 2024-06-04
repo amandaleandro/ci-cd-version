@@ -12,18 +12,8 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v2
 
-      # Etapa para incrementar a versão
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '14.x'
-
-      - name: Install jq
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-
-      - name: Run increment_version.sh
+      # Etapa para determinar a nova versão
+      - name: Determine new version
         id: version
         run: |
           if [[ -z $(git tag -l) ]]; then
@@ -40,10 +30,11 @@ jobs:
             fi
           fi
           echo "::set-output name=version::$new_version"
+        shell: /usr/bin/bash -e {0}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Etapa para criar e empurrar a tag
+     # Etapa para criar e empurrar a tag
       - name: Create tag
         if: steps.version.outputs.version != '1.0.0'
         run: git tag v${{ steps.version.outputs.version }}
