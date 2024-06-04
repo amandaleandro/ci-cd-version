@@ -10,12 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        run: git clone https://github.com/amandaleandro/ci-cd-version.git
+        uses: actions/checkout@v2
 
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20.4.0'
+          node-version: '18.20.3'  # Versão específica do Node.js
 
       - name: Install dependencies with npm install
         run: npm install
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        run: git clone https://github.com/amandaleandro/ci-cd-version.git
+        uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -49,8 +49,8 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t my-docker-repo/my-app:$VERSION .
-          docker push my-docker-repo/my-app:$VERSION
+          docker build -t my-docker-repo/my-app:${{ env.VERSION }} .
+          docker push my-docker-repo/my-app:${{ env.VERSION }}
         env:
-          VERSION: ${{ env.VERSION }}
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
