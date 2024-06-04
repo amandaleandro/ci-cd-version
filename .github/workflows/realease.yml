@@ -31,8 +31,9 @@ jobs:
           ./increment_version.sh
           echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV
 
-      # Create and push tag
+      # Create and push tag if a new version is generated
       - name: Create and push tag
+        if: steps.increment_version.outputs.VERSION != ''
         run: |
           git tag ${{ env.VERSION }}
           git push origin ${{ env.VERSION }}

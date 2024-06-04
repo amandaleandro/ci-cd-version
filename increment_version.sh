@@ -55,6 +55,9 @@ elif [ -n "$commit_messages" ]; then
   echo "Outras alterações detectadas. Incrementando a versão patch para $patch."
 else
   echo "Nenhuma alteração detectada. Mantendo a versão atual $version."
+  new_version=""
+  echo "VERSION=" > version.txt
+  exit 0
 fi
 
 # Cria a nova versão
@@ -69,6 +72,7 @@ fi
 
 # Escreve a nova versão em um arquivo
 echo "$new_version" > version.txt
+echo "VERSION=$new_version" >> $GITHUB_ENV
 
 # Adiciona uma tag ao repositório com a nova versão e faz o push da tag para o repositório remoto
 git tag "$new_version"
