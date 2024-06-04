@@ -1,4 +1,4 @@
-name: CI/CD
+name: Release
 
 on:
   push:
@@ -9,45 +9,46 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Check out the repository
         uses: actions/checkout@v2
-      
+
+      # Etapa para incrementar a versão
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: '14.x'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install jq
+        run: sudo apt-get install jq
 
-      - name: Determine new version
-        id: determine_version
+      - name: Run increment_version.sh
+        id: version
         run: |
-          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null)
-
-          if [ -z "$latest_tag" ]; then
-            new_version="1.0.0"
-          else
-            major=$(echo "$latest_tag" | cut -d. -f1)
-            minor=$(echo "$latest_tag" | cut -d. -f2)
-            patch=$(echo "$latest_tag" | cut -d. -f3)
-            
-            if [ "$major" -eq "0" ]; then
-              minor=$((minor + 1))
-            else
-              major=$((major + 1))
-            fi
-            
-            new_version="$major.$minor.$patch"
-          fi
-
+          bash ./increment_version.sh
           echo "::set-output name=version::$new_version"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run tests
-        run: npm test
+      # Etapa para criar e empurrar a tag
+      - name: Create tag
+        if: steps.version.outputs.version != '1.0.0'
+        run: git tag v${{ steps.version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and publish
+      - name: Push tag
+        if: steps.version.outputs.version != '1.0.0'
+        run: git push origin v${{ steps.version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Etapa para construir e empurrar a imagem Docker
+      - name: Build and push Docker image
+        if: steps.version.outputs.version != '1.0.0'
         run: |
-          # Use the determined version
-          echo "New version: ${{ steps.determine_version.outputs.version }}"
-          # Add your build and publish commands here using the determined version
+          docker build -t my-docker-repo/my-app:${{ steps.version.outputs.version }} .
+          docker push my-docker-repo/my-app:${{ steps.version.outputs.version }}
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
