@@ -43,3 +43,8 @@ Indique a licença do projeto, por exemplo: MIT, Apache, etc.
 Gente pelo amor de Deus porque essa merda nao funciona 
 socorro Deus !!!
 pelo amor do ceus eu preciso resolver isso. 
+dknklnkdnklsndsa
+
+dsjnkdnskldmslad
+
+dsaknbdjksankldsad
