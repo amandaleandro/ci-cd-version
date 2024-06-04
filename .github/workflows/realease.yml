@@ -33,7 +33,7 @@ jobs:
 
       # Create and push tag if a new version is generated
       - name: Create and push tag
-        if: steps.increment_version.outputs.VERSION != ''
+        if: env.VERSION != ''
         run: |
           git tag ${{ env.VERSION }}
           git push origin ${{ env.VERSION }}
