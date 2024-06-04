@@ -39,3 +39,6 @@ Indique a licença do projeto, por exemplo: MIT, Apache, etc.
 
 - Agradeça às pessoas ou organizações que contribuíram para o projeto.
 - Reconheça qualquer recurso de código aberto ou bibliotecas utilizadas.
+
+Gente pelo amor de Deus porque essa merda nao funciona 
+socorro Deus !!!
