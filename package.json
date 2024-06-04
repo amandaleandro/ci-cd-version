@@ -1,15 +1,36 @@
 {
-  "name": "your-project-name",
+  "name": "seu-projeto",
   "version": "1.0.0",
-  "release": {
-    "branches": ["main"],
-    "repositoryUrl": "https://github.com/amandaleandro/ci-cd-version.git",
+  "description": "Descrição do seu projeto",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "URL do seu repositório Git"
+  },
+  "author": "Seu Nome",
+  "license": "MIT",
+  "engines": {
+    "node": "20.4.0"  // Especifica a versão do Node.js
+  },
+  "dependencies": {
+    "@semantic-release/changelog": "5.0.1",
+    "@semantic-release/commit-analyzer": "^6.3.0",
+    "@semantic-release/git": "^7.0.0",
+    "@semantic-release/github": "^7.0.0",
+    "@semantic-release/release-notes-generator": "^7.0.0",
+    "semantic-release": "17.0.7"
+  },
+  "semantic-release": {
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
       "@semantic-release/changelog",
-      "@semantic-release/github",
-      "@semantic-release/git"
+      "@semantic-release/git",
+      "@semantic-release/github"
     ]
   }
 }
