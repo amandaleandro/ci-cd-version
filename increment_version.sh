@@ -21,6 +21,13 @@ if [[ ! -x "$0" ]]; then
     exit 1
 fi
 
+# Ensure we are on the main branch
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+if [ "$current_branch" != "main" ]; then
+    echo "This script must be executed on the 'main' branch."
+    exit 1
+fi
+
 # Get the latest tag version
 latest_tag=$(git describe --tags --abbrev=0 2>/dev/null)
 
