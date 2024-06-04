@@ -45,5 +45,6 @@ else
   new_version="$major.$minor.$patch"
 fi
 
-# Export the new version for the workflow
-echo "::set-output name=version::$new_version"
+# Output the new version to the environment file
+echo "VERSION=$new_version" >> $GITHUB_ENV
+
