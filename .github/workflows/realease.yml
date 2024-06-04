@@ -12,6 +12,10 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v2
 
+      # Fetch all tags
+      - name: Fetch all tags
+        run: git fetch --tags
+
       # Create version.txt if it doesn't exist
       - name: Create version.txt
         run: touch version.txt
