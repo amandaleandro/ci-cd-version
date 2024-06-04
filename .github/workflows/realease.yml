@@ -12,6 +12,9 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v2
 
+      - name: Print package.json
+        run: cat package.json
+
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
@@ -27,29 +30,15 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx semantic-release
 
-  build-and-push-docker:
-    needs: release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Extract version from package.json
-        id: get_version
-        run: echo "VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
-
       - name: Build and push Docker image
-        run: |
-          docker build -t my-docker-repo/my-app:$VERSION .
-          docker push my-docker-repo/my-app:$VERSION
+        if: success()
         env:
-          VERSION: ${{ env.VERSION }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          IMAGE_NAME: my-app
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          docker build -t $IMAGE_NAME:$VERSION .
+          echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+          docker tag $IMAGE_NAME:$VERSION $DOCKER_USERNAME/$IMAGE_NAME:$VERSION
+          docker push $DOCKER_USERNAME/$IMAGE_NAME:$VERSION
