@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -6,14 +6,13 @@ on:
       - main
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v2
-
-      - name: Setup Node.js
+      
+      - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: '14'
@@ -22,35 +21,33 @@ jobs:
         run: npm install
 
       - name: Determine new version
-        id: version
+        id: determine_version
         run: |
-          latest_tag=$(git describe --tags --abbrev=0)
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null)
+
           if [ -z "$latest_tag" ]; then
             new_version="1.0.0"
           else
             major=$(echo "$latest_tag" | cut -d. -f1)
             minor=$(echo "$latest_tag" | cut -d. -f2)
             patch=$(echo "$latest_tag" | cut -d. -f3)
+            
             if [ "$major" -eq "0" ]; then
               minor=$((minor + 1))
             else
               major=$((major + 1))
             fi
+            
             new_version="$major.$minor.$patch"
           fi
+
           echo "::set-output name=version::$new_version"
 
-      - name: Bump version in package.json
-        run: npm version ${{ steps.version.outputs.version }}
+      - name: Run tests
+        run: npm test
 
-      - name: Commit version increment
+      - name: Build and publish
         run: |
-          git config --local user.email "amandaleandrosoares@gmail.com"
-          git config --local user.name "amandaleandro"
-          git commit -am "Bump version"
-          git push
-
-      - name: Create tag and push
-        run: |
-          git tag v${{ steps.version.outputs.version }}
-          git push origin v${{ steps.version.outputs.version }}
+          # Use the determined version
+          echo "New version: ${{ steps.determine_version.outputs.version }}"
+          # Add your build and publish commands here using the determined version
