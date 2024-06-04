@@ -12,14 +12,13 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v2
 
-      # Adicione uma etapa para executar npm ci com as opções necessárias
-      - name: Install dependencies with npm ci
-        run: npm ci --force --legacy-peer-deps
-
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '18'
+          node-version: '20.14.0'
+
+      - name: Install dependencies with npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Release
         id: release
