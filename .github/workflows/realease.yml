@@ -22,21 +22,15 @@ jobs:
 
       # Run the script to increment the version
       - name: Run increment_version.sh
-        id: version
+        id: increment_version
         run: |
           ./increment_version.sh
           echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV
 
-      # Check if the new version tag already exists
-      - name: Check if tag already exists
-        run: |
-          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
-            echo "::error::Tag v${{ steps.version.outputs.version }} already exists. Skipping tag creation."
-            exit 1
-          fi
-
       # Create and push tag
       - name: Create and push tag
         run: |
-          git tag v${{ steps.version.outputs.version }}
-          git push origin --tags
+          git tag ${{ env.VERSION }}
+          git push origin ${{ env.VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

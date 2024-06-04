@@ -15,12 +15,6 @@ if ! git rev-parse --is-inside-work-tree &> /dev/null; then
   exit 1
 fi
 
-# Garante que o script tenha permissões de execução
-if [[ ! -x "$0" ]]; then
-  echo "O script não tem permissões de execução. Conceda permissões de execução usando 'chmod +x $0'."
-  exit 1
-fi
-
 # Garante que estamos na branch principal (main)
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 if [ "$current_branch" != "main" ]; then
@@ -66,4 +60,3 @@ echo "$new_version" > version.txt
 # Adiciona uma tag ao repositório com a nova versão e faz o push da tag para o repositório remoto
 git tag "$new_version"
 git push origin "$new_version"
-
