@@ -38,18 +38,18 @@ IFS='.' read -r major minor patch <<< "$version"
 # Verifica se houve alterações desde a última tag
 commit_messages=$(git log --pretty=format:"%s" $latest_tag..HEAD)
 
-if [[ $commit_messages == *"BREAKING CHANGE"* ]]; então
+if [[ $commit_messages == *"BREAKING CHANGE"* ]]; then
   # Se houver commits com a mensagem "BREAKING CHANGE", incrementa a versão major
   major=$((major + 1))
   minor=0
   patch=0
   echo "Alterações detectadas com 'BREAKING CHANGE'. Incrementando a versão major para $major."
-elif [[ $commit_messages == *"feat"* ]]; então
+elif [[ $commit_messages == *"feat"* ]]; then
   # Se houver commits com a palavra-chave "feat", incrementa a versão minor
   minor=$((minor + 1))
   patch=0
   echo "Alterações detectadas com 'feat'. Incrementando a versão minor para $minor."
-elif [ -n "$commit_messages" ]; então
+elif [ -n "$commit_messages" ]; then
   # Se houver outros commits, incrementa a versão patch
   patch=$((patch + 1))
   echo "Outras alterações detectadas. Incrementando a versão patch para $patch."
@@ -75,3 +75,4 @@ echo "VERSION=$new_version" >> $GITHUB_ENV
 # Adiciona uma tag ao repositório com a nova versão e faz o push da tag para o repositório remoto
 git tag "$new_version"
 git push origin "$new_version"
+
