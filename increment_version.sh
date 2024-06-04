@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Verifica se há commits no repositório
+if [ "$(git rev-list --count HEAD)" -eq 0 ]; then
+  echo "Não há commits no repositório."
+  exit 1
+fi
+
 # Obtém a versão mais recente da tag
 latest_tag=$(git describe --tags --abbrev=0)
 
@@ -29,6 +35,4 @@ fi
 echo "Nova versão: $new_version"
 
 # Aqui você pode criar a tag com a nova versão
-git tag "$new_version"
-git push origin "$new_version"
-```
+# git tag "$new_version"
