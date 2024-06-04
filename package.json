@@ -14,7 +14,7 @@
   "author": "Seu Nome",
   "license": "MIT",
   "engines": {
-    "node": "20.4.0" 
+    "node": "20.4.0"
   },
   "dependencies": {
     "@semantic-release/changelog": "5.0.1",
@@ -22,7 +22,7 @@
     "@semantic-release/git": "^7.0.0",
     "@semantic-release/github": "^7.0.0",
     "@semantic-release/release-notes-generator": "^7.0.0",
-    "semantic-release": "17.0.7"
+    "semantic-release": "^24.0.0"
   },
   "semantic-release": {
     "plugins": [
