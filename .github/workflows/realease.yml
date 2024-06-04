@@ -1,4 +1,4 @@
-name: Release
+name: CI
 
 on:
   push:
@@ -6,39 +6,14 @@ on:
       - main
 
 jobs:
-  increment-version:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '14'
-
-      - name: Install jq
-        run: sudo apt-get install jq
-
-      - name: Increment version
-        run: |
-          bash ./increment_version.sh
-
-      - name: Commit and push new version
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git commit -am "Bump version"
-          git push
-
-  semantic-release:
-    needs: increment-version
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
           node-version: '14'
@@ -46,8 +21,36 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Semantic Release
-        run: npx semantic-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Determine new version
+        id: version
+        run: |
+          latest_tag=$(git describe --tags --abbrev=0)
+          if [ -z "$latest_tag" ]; then
+            new_version="1.0.0"
+          else
+            major=$(echo "$latest_tag" | cut -d. -f1)
+            minor=$(echo "$latest_tag" | cut -d. -f2)
+            patch=$(echo "$latest_tag" | cut -d. -f3)
+            if [ "$major" -eq "0" ]; then
+              minor=$((minor + 1))
+            else
+              major=$((major + 1))
+            fi
+            new_version="$major.$minor.$patch"
+          fi
+          echo "::set-output name=version::$new_version"
+
+      - name: Bump version in package.json
+        run: npm version ${{ steps.version.outputs.version }}
+
+      - name: Commit version increment
+        run: |
+          git config --local user.email "amandaleandrosoares@gmail.com"
+          git config --local user.name "amandaleandro"
+          git commit -am "Bump version"
+          git push
+
+      - name: Create tag and push
+        run: |
+          git tag v${{ steps.version.outputs.version }}
+          git push origin v${{ steps.version.outputs.version }}
