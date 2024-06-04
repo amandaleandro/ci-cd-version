@@ -45,4 +45,5 @@ else
   new_version="$major.$minor.$patch"
 fi
 
-echo "New version: $new_version"
+# Export the new version for the workflow
+echo "::set-output name=version::$new_version"
