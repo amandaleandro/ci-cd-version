@@ -67,14 +67,14 @@ fi
 new_version="v$major.$minor.$patch"
 echo "New version: $new_version"
 
-# Output the new version to a file
-echo "$new_version" > version.txt
-
 # Check if the tag already exists
 if git rev-parse "$new_version" >/dev/null 2>&1; then
   echo "Tag $new_version already exists. Exiting without creating a new tag."
   exit 0
 fi
+
+# Output the new version to a file
+echo "$new_version" > version.txt
 
 # Tag the repository with the new version
 git tag "$new_version"
