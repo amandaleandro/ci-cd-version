@@ -20,12 +20,12 @@ jobs:
             new_version="1.0.0"
           else
             latest_version=$(git describe --abbrev=0 --tags)
-            major=$(echo $latest_version | cut -d. -f1)
-            minor=$(echo $latest_version | cut -d. -f2)
-            patch=$(echo $latest_version | cut -d. -f3)
-            if [[ $patch == "0" ]]; then
-              new_version="$major.$minor.1"
+            if [[ -z $latest_version ]]; then
+              new_version="1.0.0"
             else
+              major=$(echo $latest_version | cut -d. -f1)
+              minor=$(echo $latest_version | cut -d. -f2)
+              patch=$(echo $latest_version | cut -d. -f3)
               new_version="$major.$minor.$((patch+1))"
             fi
           fi
@@ -34,7 +34,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-     # Etapa para criar e empurrar a tag
+      # Etapa para criar e empurrar a tag
       - name: Create tag
         if: steps.version.outputs.version != '1.0.0'
         run: git tag v${{ steps.version.outputs.version }}
@@ -46,5 +46,3 @@ jobs:
         run: git push origin v${{ steps.version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    
