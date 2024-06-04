@@ -9,15 +9,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "URL do seu repositório Git"
+    "url": "https://github.com/amandaleandro/ci-cd-version"
   },
-  "author": "Seu Nome",
+  "author": "Amanda Leandro",
   "license": "MIT",
   "dependencies": {
-    // Adicione suas dependências aqui
-  },
-  "devDependencies": {
-    // Adicione suas dependências de desenvolvimento aqui
+    "@semantic-release/changelog": "^5.0.1",
+    "@semantic-release/commit-analyzer": "^6.3.0",
+    "@semantic-release/git": "^7.0.0",
+    "@semantic-release/github": "^7.0.0",
+    "@semantic-release/release-notes-generator": "^7.0.0"
   },
   "semantic-release": {
     "plugins": [
@@ -27,5 +28,8 @@
       "@semantic-release/git",
       "@semantic-release/github"
     ]
+  },
+  "devDependencies": {
+    "semantic-release": "^24.0.0"
   }
 }
