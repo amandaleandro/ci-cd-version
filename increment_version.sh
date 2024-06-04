@@ -1,81 +1,87 @@
 #!/bin/bash
 
-# Check if Git is installed
+# Verifica se o Git está instalado
 if ! command -v git &> /dev/null; then
-  echo "Git is not installed. Please install Git and try again."
+  echo "Git não está instalado. Por favor, instale o Git e tente novamente."
   exit 1
 fi
 
-# Navigate to the repository directory
+# Navega até o diretório do repositório
 cd "$(dirname "$0")"
 
-# Ensure script is executed in the context of a Git repository
+# Garante que o script está sendo executado no contexto de um repositório Git
 if ! git rev-parse --is-inside-work-tree &> /dev/null; then
-  echo "This script must be executed inside a Git repository."
+  echo "Este script deve ser executado dentro de um repositório Git."
   exit 1
 fi
 
-# Ensure script has execution permissions
+# Garante que o script tenha permissões de execução
 if [[ ! -x "$0" ]]; then
-  echo "Script does not have execute permissions. Grant execute permissions using 'chmod +x $0'."
+  echo "O script não tem permissões de execução. Conceda permissões de execução usando 'chmod +x $0'."
   exit 1
 fi
 
-# Ensure we are on the main branch
+# Garante que estamos na branch principal (main)
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 if [ "$current_branch" != "main" ]; then
-  echo "This script must be executed on the 'main' branch."
+  echo "Este script deve ser executado na branch 'main'."
   exit 1
 fi
 
-# Get the latest tag version or set it to v1.0.0 if no tags exist
+# Obtém a versão da última tag ou define como v1.0.0 se não houver tags
 latest_tag=$(git describe --tags --abbrev=0 2>/dev/null)
 if [ -z "$latest_tag" ]; then
   latest_tag="v1.0.0"
-  echo "No previous tags found. Starting with version $latest_tag."
+  echo "Nenhuma tag anterior encontrada. Começando com a versão $latest_tag."
 fi
 
-# Extract the version components from the latest tag
+# Extrai os componentes da versão da última tag
 version=$(echo "$latest_tag" | cut -d'v' -f2)
 
-# Extract major, minor, and patch versions
+# Extrai as versões de maior, menor e correção
 IFS='.' read -r major minor patch <<< "$version"
 
-# Check the commits to determine whether to increment major, minor, or patch
+# Verifica os commits para determinar se deve incrementar a versão de maior, menor ou de correção
 commit_messages=$(git log --pretty=format:"%s" ${latest_tag}..HEAD)
-echo "Commit messages since latest tag:"
+echo "Mensagens de commit desde a última tag:"
 echo "$commit_messages"
 
-if [[ $commit_messages == *"BREAKING CHANGE"* ]]; then
-  # If there are commits with the message "BREAKING CHANGE", increment the major version
-  major=$((major + 1))
-  minor=0
-  patch=0
-  echo "Breaking change detected. Incrementing major version to $major."
-elif [[ $commit_messages == *"feat"* ]]; then
-  # If there are commits with the keyword "feat", increment the minor version
-  minor=$((minor + 1))
-  patch=0
-  echo "Feature commits detected. Incrementing minor version to $minor."
-else
-  # Otherwise, increment the patch version
+if [[ -z "$commit_messages" ]]; then
+  # Se não houver mensagens de commit, incrementa a versão de correção
   patch=$((patch + 1))
-  echo "Incrementing patch version to $patch."
+  echo "Nenhuma mudança detectada. Incrementando a versão de correção para $patch."
+else
+  if [[ $commit_messages == *"BREAKING CHANGE"* ]]; then
+    # Se houver commits com a mensagem "BREAKING CHANGE", incrementa a versão de maior
+    major=$((major + 1))
+    minor=0
+    patch=0
+    echo "Mudança de quebra detectada. Incrementando a versão de maior para $major."
+  elif [[ $commit_messages == *"feat"* ]]; then
+    # Se houver commits com a palavra-chave "feat", incrementa a versão de menor
+    minor=$((minor + 1))
+    patch=0
+    echo "Commits de recurso detectados. Incrementando a versão de menor para $minor."
+  else
+    # Caso contrário, incrementa a versão de correção
+    patch=$((patch + 1))
+    echo "Incrementando a versão de correção para $patch."
+  fi
 fi
 
-# Create the new version
+# Cria a nova versão
 new_version="v$major.$minor.$patch"
-echo "New version: $new_version"
+echo "Nova versão: $new_version"
 
-# Check if the tag already exists
+# Verifica se a tag já existe
 if git rev-parse "$new_version" >/dev/null 2>&1; then
-  echo "Tag $new_version already exists. Exiting without creating a new tag."
+  echo "Tag $new_version já existe. Saindo sem criar uma nova tag."
   exit 0
 fi
 
-# Output the new version to a file
+# Escreve a nova versão em um arquivo
 echo "$new_version" > version.txt
 
-# Tag the repository with the new version
+# Adiciona uma tag ao repositório com a nova versão e faz o push da tag para o repositório remoto
 git tag "$new_version"
 git push origin "$new_version"
