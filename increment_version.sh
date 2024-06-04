@@ -48,3 +48,9 @@ fi
 # Output the new version to the environment file
 echo "VERSION=$new_version" >> $GITHUB_ENV
 
+# Check if the version was successfully written to the environment file
+if [ $? -eq 0 ]; then
+  echo "New version $new_version written to $GITHUB_ENV"
+else
+  echo "Failed to write new version to $GITHUB_ENV"
+fi
