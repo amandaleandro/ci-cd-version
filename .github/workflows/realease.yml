@@ -44,12 +44,7 @@ jobs:
 
       # Etapa para construir e empurrar a imagem Docker
       - name: Build and push Docker image
-      if: steps.version.outputs.version != '1.0.0'
-      run: |
-        docker build -t my-docker-repo/my-app:${{ steps.version.outputs.version }} .
-        docker push my-docker-repo/my-app:${{ steps.version.outputs.version }}
-      env:
-        VERSION: ${{ steps.version.outputs.version }}
-        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-    
+        if: steps.version.outputs.version != '1.0.0'
+        run: |
+          docker build -t my-docker-repo/my-app:${{ steps.version.outputs.version }} .
+          docker push my-docker-repo/my-app:${{ steps.ve
