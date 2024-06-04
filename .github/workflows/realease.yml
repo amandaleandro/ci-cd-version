@@ -27,5 +27,5 @@ jobs:
       - name: Create and push tag
         if: steps.version.outputs.version != '1.0.0'
         run: |
-          git tag v${{ env.VERSION }}
-          git push origin v${{ env.VERSION }}
+          git tag -f v${{ env.VERSION }}
+          git push -f origin v${{ env.VERSION }}
