@@ -16,6 +16,11 @@ jobs:
       - name: Set execute permission for the script
         run: chmod +x increment_version.sh
 
+      # Get the latest tag version
+      - name: Get latest tag version
+        id: latest_tag
+        run: echo "::set-output name=tag::$(git describe --tags --abbrev=0)"
+
       # Run the script to increment the version
       - name: Run increment_version.sh
         id: version
@@ -27,5 +32,5 @@ jobs:
       - name: Create and push tag
         if: steps.version.outputs.version != '1.0.0'
         run: |
-          git tag -f v${{ env.VERSION }}
-          git push -f origin v${{ env.VERSION }}
+          git tag v${{ steps.version.outputs.version }}
+          git push origin --tags
