@@ -1,10 +1,31 @@
 {
+  "name": "meu-projeto",
+  "version": "0.1.0",
+  "description": "Descrição do meu projeto",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "URL do seu repositório Git"
+  },
+  "author": "Seu Nome",
+  "license": "MIT",
+  "dependencies": {
+    // Adicione suas dependências aqui
+  },
   "devDependencies": {
-    "@semantic-release/changelog": "^6.0.0",
-    "@semantic-release/commit-analyzer": "^9.0.0",
-    "@semantic-release/git": "^10.0.0",
-    "@semantic-release/github": "^8.0.0",
-    "@semantic-release/release-notes-generator": "^10.0.0",
-    "semantic-release": "^19.0.0"
+    // Adicione suas dependências de desenvolvimento aqui
+  },
+  "semantic-release": {
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/changelog",
+      "@semantic-release/git",
+      "@semantic-release/github"
+    ]
   }
 }
