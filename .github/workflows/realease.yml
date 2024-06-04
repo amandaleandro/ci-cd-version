@@ -12,25 +12,27 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v2
 
+      # Create version.txt if it doesn't exist
+      - name: Create version.txt
+        run: touch version.txt
+
       # Set execute permission for the script
       - name: Set execute permission for the script
         run: chmod +x increment_version.sh
 
-      # Get the latest tag version
-      - name: Get latest tag version
-        id: latest_tag
-        run: echo "latest_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_STATE
-
       # Run the script to increment the version
       - name: Run increment_version.sh
         id: version
-        run: |
-          ./increment_version.sh
-          echo "VERSION=$(cat $GITHUB_OUTPUT)" >> $GITHUB_STATE
+        run: ./increment_version.sh
+
+      # Read the version from the file
+      - name: Read version from file
+        id: read_version
+        run: echo "::set-output name=version::$(cat version.txt)"
 
       # Create and push tag
       - name: Create and push tag
-        if: steps.version.outputs.version != '1.0.0'
+        if: steps.read_version.outputs.version != '1.0.0'
         run: |
-          git tag v${{ env.VERSION }}
+          git tag v${{ steps.read_version.outputs.version }}
           git push origin --tags

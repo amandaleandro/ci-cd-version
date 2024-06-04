@@ -44,5 +44,5 @@ else
   new_version="$major.$minor.$patch"
 fi
 
-# Output the new version
-echo "$new_version"
+# Output the new version to a file
+echo "$new_version" > version.txt
