@@ -31,12 +31,12 @@ fi
 # Get the latest tag version or set it to v1.0.0 if no tags exist
 latest_tag=$(git describe --tags --abbrev=0 2>/dev/null)
 if [ -z "$latest_tag" ]; then
-  latest_tag="v1.0.0"
+  latest_tag="1.0.0"
   echo "No previous tags found. Starting with version $latest_tag."
 fi
 
 # Extract the version components from the latest tag
-major=$(echo "$latest_tag" | cut -d. -f1 | sed 's/^v//')
+major=$(echo "$latest_tag" | cut -d. -f1)
 minor=$(echo "$latest_tag" | cut -d. -f2)
 patch=$(echo "$latest_tag" | cut -d. -f3)
 
@@ -63,12 +63,13 @@ else
 fi
 
 # Create the new version
-new_version="v$major.$minor.$patch"
+new_version="$major.$minor.$patch"
 echo "New version: $new_version"
 
 # Output the new version to a file
 echo "$new_version" > version.txt
 
 # Tag the repository with the new version
-git tag "$new_version"
-git push origin "$new_version"
+tag_name="v$new_version"
+git tag "$tag_name"
+git push origin "$tag_name"
