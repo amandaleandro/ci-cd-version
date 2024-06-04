@@ -26,7 +26,19 @@ jobs:
       - name: Run increment_version.sh
         id: version
         run: |
-          bash ./increment_version.sh
+          if [[ -z $(git tag -l) ]]; then
+            new_version="1.0.0"
+          else
+            latest_version=$(git describe --abbrev=0 --tags)
+            major=$(echo $latest_version | cut -d. -f1)
+            minor=$(echo $latest_version | cut -d. -f2)
+            patch=$(echo $latest_version | cut -d. -f3)
+            if [[ $patch == "0" ]]; then
+              new_version="$major.$minor.1"
+            else
+              new_version="$major.$minor.$((patch+1))"
+            fi
+          fi
           echo "::set-output name=version::$new_version"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -44,13 +56,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Etapa para construir e empurrar a imagem Docker
-      - name: Build and push Docker image
-        if: steps.version.outputs.version != '1.0.0'
-        run: |
-          docker build -t my-docker-repo/my-app:${{ steps.version.outputs.version }} .
-          docker push my-docker-repo/my-app:${{ steps.version.outputs.version }}
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    
