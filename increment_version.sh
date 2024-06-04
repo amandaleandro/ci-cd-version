@@ -47,3 +47,5 @@ if ! git diff-index --quiet HEAD --; then
 else
   echo "Não há alterações no repositório. Nenhuma nova versão será criada."
 fi
+
+exit 0
