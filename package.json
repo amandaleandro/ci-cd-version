@@ -14,7 +14,7 @@
   "author": "Seu Nome",
   "license": "MIT",
   "engines": {
-    "node": "20.4.0"  // Especifica a versão do Node.js
+    "node": "20.4.0" 
   },
   "dependencies": {
     "@semantic-release/changelog": "5.0.1",
