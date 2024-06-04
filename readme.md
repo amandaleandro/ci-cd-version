@@ -39,16 +39,3 @@ Indique a licença do projeto, por exemplo: MIT, Apache, etc.
 
 - Agradeça às pessoas ou organizações que contribuíram para o projeto.
 - Reconheça qualquer recurso de código aberto ou bibliotecas utilizadas.
-
-Gente pelo amor de Deus porque essa merda nao funciona 
-socorro Deus !
-
-
-edjlkdjskldjwekljioeiwjiejdiowqajdmopslw;asnkdsanldwend
-dklsndeklwsndklsnlksmkldmslamdlkmlwemklddewdknkndcskncksdncknkdsnckcnksdnckdscnklljdkbknsnskandlksandlk
-dksalndwklsanklsnlkadnmsa
-djsklandkankldnsalknm
-xadsknask;lml;adsml;mdl;asm,
-dsnksndksam.md.samdsamlknsdklamdlsa,ds;a,d;la
-as;mdasl;mdl dklmaskmd;las,d;ás'sjnxsnsnkxnlanknkanxanlnklaxmsa
-xsakjsxkjasnxnakskdsjdilkqwasikndksnlkasnklasmkdlnaslkmdsal;dmas;l,;lad;lsm;zdaklndklasndklsanlkdsnakldsamdnjkasnlkqmasLbdalsndkasndsnjkdnaskldmasmd;aszdm;sal
