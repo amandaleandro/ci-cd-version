@@ -24,7 +24,7 @@ fi
 
 # Obtém a versão da última tag ou define como v1.0.0 se não houver tags
 latest_tag=$(git describe --tags --abbrev=0 2>/dev/null)
-if [ -z "$latest_tag" ]; então
+if [ -z "$latest_tag" ]; then
   latest_tag="v1.0.0"
   echo "Nenhuma tag anterior encontrada. Começando com a versão $latest_tag."
 fi
@@ -32,7 +32,7 @@ fi
 # Extrai os componentes da versão da última tag
 version=$(echo "$latest_tag" | cut -d'v' -f2)
 
-# Extrai as versões de maior, menor e correção
+# Extrai as versões de major, minor e patch
 IFS='.' read -r major minor patch <<< "$version"
 
 # Verifica se houve alterações desde a última tag
@@ -62,7 +62,7 @@ new_version="v$major.$minor.$patch"
 echo "Nova versão: $new_version"
 
 # Verifica se a tag já existe
-if git rev-parse "$new_version" >/dev/null 2>&1; então
+if git rev-parse "$new_version" >/dev/null 2>&1; then
   echo "Tag $new_version já existe. Saindo sem criar uma nova tag."
   exit 0
 fi
