@@ -21,13 +21,9 @@ jobs:
           node-version: '14'
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Install semver
-        run: npm install semver
-
-      - name: Install semantic-release
-        run: npm install semantic-release@17.0.7
+        run: |
+          npm ci
+          npm cache clean --force
 
       - name: Release
         id: release
@@ -36,34 +32,15 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx semantic-release
 
-      - name: Get latest version from Docker Hub
-        if: success()
-        id: get_latest_version
-        run: |
-          LATEST_VERSION=$(curl -sS "https://registry.hub.docker.com/v1/repositories/$DOCKER_USERNAME/$IMAGE_NAME/tags" | jq -r 'map(select(.name | startswith("'"$IMAGE_NAME"'-"))) | map(.name) | .[]' | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -rV | head -n 1)
-          echo "::set-output name=latest_version::$LATEST_VERSION"
-
-      - name: Determine version
-        id: determine_version
-        if: success() && steps.get_latest_version.outputs.latest_version != null
-        run: |
-          VERSION=$(npx semver ${{ steps.get_latest_version.outputs.latest_version }} -i prerelease)
-          echo "::set-output name=version::$VERSION"
-
-      - name: Use default version
-        id: use_default_version
-        if: success() && steps.get_latest_version.outputs.latest_version == null
-        run: |
-          echo "::set-output name=version::1.0.0"
-
       - name: Build and push Docker image
         if: success()
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           IMAGE_NAME: my-app
+          VERSION: ${{ steps.release.outputs.version }}
         run: |
-          VERSION="${{ steps.determine_version.outputs.version }}"
-          docker build -t $DOCKER_USERNAME/$IMAGE_NAME:$VERSION .
+          docker build -t $IMAGE_NAME:$VERSION .
           echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+          docker tag $IMAGE_NAME:$VERSION $DOCKER_USERNAME/$IMAGE_NAME:$VERSION
           docker push $DOCKER_USERNAME/$IMAGE_NAME:$VERSION
