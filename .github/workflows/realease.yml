@@ -25,11 +25,18 @@ jobs:
         id: version
         run: |
           ./increment_version.sh
-          echo "VERSION=$(cat version.txt)" >> $GITHUB_OUTPUT
+          echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV
+
+      # Check if the new version tag already exists
+      - name: Check if tag already exists
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "::error::Tag v${{ steps.version.outputs.version }} already exists. Skipping tag creation."
+            exit 1
+          fi
 
       # Create and push tag
       - name: Create and push tag
-        if: steps.version.outputs.version != '1.0.0'
         run: |
           git tag v${{ steps.version.outputs.version }}
           git push origin --tags
