@@ -32,17 +32,15 @@ jobs:
       # Etapa para criar e empurrar a tag
       - name: Create tag
         if: steps.version.outputs.version != '1.0.0'
-        run: git tag v${{ env.NEW_VERSION }}
+        run: git tag v${{ steps.version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NEW_VERSION: ${{ steps.version.outputs.version }}
 
       - name: Push tag
         if: steps.version.outputs.version != '1.0.0'
-        run: git push origin v${{ env.NEW_VERSION }}
+        run: git push origin v${{ steps.version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NEW_VERSION: ${{ steps.version.outputs.version }}
 
       # Etapa para construir e empurrar a imagem Docker
       - name: Build and push Docker image
