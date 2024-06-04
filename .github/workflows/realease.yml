@@ -1,4 +1,3 @@
-
 name: Release
 
 on:
@@ -13,7 +12,7 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v2
 
-      # Etapa para determinar a próxima versão
+      # Etapa para incrementar a versão
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
@@ -22,25 +21,34 @@ jobs:
       - name: Install jq
         run: sudo apt-get install jq
 
-      - name: Determine next version
+      - name: Run increment_version.sh
         id: version
         run: |
           bash ./increment_version.sh
           echo "::set-output name=version::$new_version"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Etapa para criar e empurrar a tag, se necessário
-      - name: Create and push tag
-        if: steps.version.outputs.version != '1.0.0' # Skip if initial version
-        run: |
-          git tag v${{ steps.version.outputs.version }}
-          git push origin v${{ steps.version.outputs.version }}
+      # Etapa para criar e empurrar a tag
+      - name: Create tag
+        if: steps.version.outputs.version != '1.0.0'
+        run: git tag v${{ steps.version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push tag
+        if: steps.version.outputs.version != '1.0.0'
+        run: git push origin v${{ steps.version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Etapa para construir e empurrar a imagem Docker
       - name: Build and push Docker image
-        if: steps.version.outputs.version != '1.0.0' # Skip if initial version
+        if: steps.version.outputs.version != '1.0.0'
         run: |
           docker build -t my-docker-repo/my-app:${{ steps.version.outputs.version }} .
           docker push my-docker-repo/my-app:${{ steps.version.outputs.version }}
         env:
+          VERSION: ${{ steps.version.outputs.version }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
