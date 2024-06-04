@@ -15,7 +15,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20.8.1' 
+          node-version: '20.8.1'  # Versão específica do Node.js compatível com Semantic Release
 
       - name: Install dependencies with npm install
         run: |
@@ -51,8 +51,8 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t my-docker-repo/my-app:${{ env.VERSION }} .
-          docker push my-docker-repo/my-app:${{ env.VERSION }}
+          docker build -t my-docker-repo/my-app:${{ steps.get_version.outputs.VERSION }} .
+          docker push my-docker-repo/my-app:${{ steps.get_version.outputs.VERSION }}
         env:
           VERSION: ${{ steps.get_version.outputs.VERSION }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
