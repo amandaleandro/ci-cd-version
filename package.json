@@ -1,30 +1,15 @@
 {
-  "name": "meu-projeto",
-  "version": "0.1.0",
-  "description": "Descrição do meu projeto",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "semantic-release": "semantic-release"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/amandaleandro/ci-cd-version"
-  },
-  "author": "Amanda Leandro",
-  "license": "MIT",
-  "dependencies": {
-    "@semantic-release/changelog": "^5.0.1",
-    "@semantic-release/commit-analyzer": "^6.3.0",
-    "@semantic-release/git": "^7.0.0",
-    "@semantic-release/github": "^7.0.0",
-    "@semantic-release/release-notes-generator": "^7.0.0"
-  },
-  "devDependencies": {
-    "semantic-release": "^24.0.0"
-  },
-  "engines": {
-    "node": ">=20.14.0"
+  "name": "your-project-name",
+  "version": "1.0.0",
+  "release": {
+    "branches": ["main"],
+    "repositoryUrl": "https://github.com/amandaleandro/ci-cd-version.git",
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/changelog",
+      "@semantic-release/github",
+      "@semantic-release/git"
+    ]
   }
 }
