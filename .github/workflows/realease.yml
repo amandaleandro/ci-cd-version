@@ -15,7 +15,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '18.20.3'
+          node-version: '20.8.1'  # Versão específica do Node.js compatível com Semantic Release
 
       - name: Install dependencies with npm install
         run: |
@@ -56,4 +56,3 @@ jobs:
         env:
           VERSION: ${{ steps.get_version.outputs.VERSION }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-
