@@ -24,7 +24,7 @@ fi
 
 # Obtém a versão da última tag ou define como v1.0.0 se não houver tags
 latest_tag=$(git describe --tags --abbrev=0 2>/dev/null)
-if [ -z "$latest_tag" ]; then
+if [ -z "$latest_tag" ]; então
   latest_tag="v1.0.0"
   echo "Nenhuma tag anterior encontrada. Começando com a versão $latest_tag."
 fi
@@ -36,10 +36,23 @@ version=$(echo "$latest_tag" | cut -d'v' -f2)
 IFS='.' read -r major minor patch <<< "$version"
 
 # Verifica se houve alterações desde a última tag
-if [ "$(git diff $latest_tag)" ]; then
-  # Se houver alterações, incrementa a versão de correção
+commit_messages=$(git log --pretty=format:"%s" $latest_tag..HEAD)
+
+if [[ $commit_messages == *"BREAKING CHANGE"* ]]; then
+  # Se houver commits com a mensagem "BREAKING CHANGE", incrementa a versão major
+  major=$((major + 1))
+  minor=0
+  patch=0
+  echo "Alterações detectadas com 'BREAKING CHANGE'. Incrementando a versão major para $major."
+elif [[ $commit_messages == *"feat"* ]]; then
+  # Se houver commits com a palavra-chave "feat", incrementa a versão minor
+  minor=$((minor + 1))
+  patch=0
+  echo "Alterações detectadas com 'feat'. Incrementando a versão minor para $minor."
+elif [ -n "$commit_messages" ]; then
+  # Se houver outros commits, incrementa a versão patch
   patch=$((patch + 1))
-  echo "Alterações detectadas. Incrementando a versão de correção para $patch."
+  echo "Outras alterações detectadas. Incrementando a versão patch para $patch."
 else
   echo "Nenhuma alteração detectada. Mantendo a versão atual $version."
 fi
@@ -49,7 +62,7 @@ new_version="v$major.$minor.$patch"
 echo "Nova versão: $new_version"
 
 # Verifica se a tag já existe
-if git rev-parse "$new_version" >/dev/null 2>&1; then
+if git rev-parse "$new_version" >/dev/null 2>&1; então
   echo "Tag $new_version já existe. Saindo sem criar uma nova tag."
   exit 0
 fi
