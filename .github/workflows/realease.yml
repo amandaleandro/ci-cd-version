@@ -22,7 +22,14 @@ jobs:
 
       - name: Increment version
         run: |
-          ./increment_version.sh
+          bash ./increment_version.sh
+
+      - name: Commit and push new version
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -am "Bump version"
+          git push
 
   semantic-release:
     needs: increment-version
@@ -44,4 +51,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
