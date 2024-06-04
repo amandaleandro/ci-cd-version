@@ -19,8 +19,8 @@ jobs:
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
           nvm install 20.4.0
 
-      - name: Install dependencies with npm ci
-        run: npm ci --legacy-peer-deps
+      - name: Install dependencies with npm install
+        run: npm install
 
       - name: Release
         id: release
