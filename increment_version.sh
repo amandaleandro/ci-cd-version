@@ -41,32 +41,13 @@ version=$(echo "$latest_tag" | cut -d'v' -f2)
 # Extrai as versões de maior, menor e correção
 IFS='.' read -r major minor patch <<< "$version"
 
-# Verifica os commits para determinar se deve incrementar a versão de maior, menor ou de correção
-commit_messages=$(git log --pretty=format:"%s" ${latest_tag}..HEAD)
-echo "Mensagens de commit desde a última tag:"
-echo "$commit_messages"
-
-if [[ -z "$commit_messages" ]]; then
-  # Se não houver mensagens de commit, incrementa a versão de correção
+# Verifica se houve alterações desde a última tag
+if [ "$(git diff $latest_tag)" ]; then
+  # Se houver alterações, incrementa a versão de correção
   patch=$((patch + 1))
-  echo "Nenhuma mudança detectada. Incrementando a versão de correção para $patch."
+  echo "Alterações detectadas. Incrementando a versão de correção para $patch."
 else
-  if [[ $commit_messages == *"BREAKING CHANGE"* ]]; then
-    # Se houver commits com a mensagem "BREAKING CHANGE", incrementa a versão de maior
-    major=$((major + 1))
-    minor=0
-    patch=0
-    echo "Mudança de quebra detectada. Incrementando a versão de maior para $major."
-  elif [[ $commit_messages == *"feat"* ]]; then
-    # Se houver commits com a palavra-chave "feat", incrementa a versão de menor
-    minor=$((minor + 1))
-    patch=0
-    echo "Commits de recurso detectados. Incrementando a versão de menor para $minor."
-  else
-    # Caso contrário, incrementa a versão de correção
-    patch=$((patch + 1))
-    echo "Incrementando a versão de correção para $patch."
-  fi
+  echo "Nenhuma alteração detectada. Mantendo a versão atual $version."
 fi
 
 # Cria a nova versão
@@ -85,3 +66,4 @@ echo "$new_version" > version.txt
 # Adiciona uma tag ao repositório com a nova versão e faz o push da tag para o repositório remoto
 git tag "$new_version"
 git push origin "$new_version"
+
