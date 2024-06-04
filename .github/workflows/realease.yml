@@ -31,24 +31,24 @@ jobs:
 
       # Etapa para criar e empurrar a tag
       - name: Create tag
-        if: steps.version.outputs.version != '1.0.0'
-        run: git tag v${{ steps.version.outputs.version }}
+        if: steps.version.outputs.new_version != '1.0.0'
+        run: git tag v${{ steps.version.outputs.new_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push tag
-        if: steps.version.outputs.version != '1.0.0'
-        run: git push origin v${{ steps.version.outputs.version }}
+        if: steps.version.outputs.new_version != '1.0.0'
+        run: git push origin v${{ steps.version.outputs.new_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Etapa para construir e empurrar a imagem Docker
       - name: Build and push Docker image
-        if: steps.version.outputs.version != '1.0.0'
+        if: steps.version.outputs.new_version != '1.0.0'
         run: |
-          docker build -t my-docker-repo/my-app:${{ steps.version.outputs.version }} .
-          docker push my-docker-repo/my-app:${{ steps.version.outputs.version }}
+          docker build -t my-docker-repo/my-app:${{ steps.version.outputs.new_version }} .
+          docker push my-docker-repo/my-app:${{ steps.version.outputs.new_version }}
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ steps.version.outputs.new_version }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
