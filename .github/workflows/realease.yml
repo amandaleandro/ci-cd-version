@@ -15,10 +15,12 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '18.20.3'  # Versão específica do Node.js
+          node-version: '18.20.3'
 
       - name: Install dependencies with npm install
-        run: npm install
+        run: |
+          npm cache clean --force
+          npm install --force
 
       - name: Release
         id: release
@@ -54,3 +56,4 @@ jobs:
         env:
           VERSION: ${{ steps.get_version.outputs.VERSION }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
