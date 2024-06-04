@@ -29,4 +29,6 @@ fi
 echo "Nova versão: $new_version"
 
 # Aqui você pode criar a tag com a nova versão
-# git tag "$new_version"
+git tag "$new_version"
+git push origin "$new_version"
+```
