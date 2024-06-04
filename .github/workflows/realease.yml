@@ -19,18 +19,18 @@ jobs:
       # Get the latest tag version
       - name: Get latest tag version
         id: latest_tag
-        run: echo "::set-output name=tag::$(git describe --tags --abbrev=0)"
+        run: echo "latest_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_STATE
 
       # Run the script to increment the version
       - name: Run increment_version.sh
         id: version
         run: |
           ./increment_version.sh
-          echo "New version: ${{ env.VERSION }}"
+          echo "VERSION=$(cat $GITHUB_OUTPUT)" >> $GITHUB_STATE
 
-      # Create and push the tag
+      # Create and push tag
       - name: Create and push tag
         if: steps.version.outputs.version != '1.0.0'
         run: |
-          git tag v${{ steps.version.outputs.version }}
+          git tag v${{ env.VERSION }}
           git push origin --tags
