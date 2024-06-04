@@ -39,11 +39,3 @@ Indique a licença do projeto, por exemplo: MIT, Apache, etc.
 
 - Agradeça às pessoas ou organizações que contribuíram para o projeto.
 - Reconheça qualquer recurso de código aberto ou bibliotecas utilizadas.
-edjdkljkldjflkdjslkfcs
-dskljksladlsad,;as,dl;sa,d;sa
-dasmdl;asml;d,l;as,d;l,;asd,
-klsadmlskamldmsm,d;lsa,;,da';d.as
-as:nklasml;mdl;amsldml;dams,
-askmnksamd;lsaml;mda;md;lam
-asklmd;lml;samdl;samdl;smdsla
-saldms;ldmsa;md;amald;ms;lmda;l
