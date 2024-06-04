@@ -12,28 +12,20 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v2
 
-      # Definir permissões de execução para o script
+      # Set execute permission for the script
       - name: Set execute permission for the script
         run: chmod +x increment_version.sh
 
-      # Executar o script para incrementar a versão
+      # Run the script to increment the version
       - name: Run increment_version.sh
         id: version
         run: |
           ./increment_version.sh
-          echo "::set-output name=version::$new_version"
-        shell: /usr/bin/bash -e {0}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # Etapa para criar e empurrar a tag
-      - name: Create tag
-        if: steps.version.outputs.version != '1.0.0'
-        run: git tag v${{ steps.version.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "New version: ${{ env.VERSION }}"
 
-      - name: Push tag
+      # Create and push the tag
+      - name: Create and push tag
         if: steps.version.outputs.version != '1.0.0'
-        run: git push origin v${{ steps.version.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git tag v${{ env.VERSION }}
+          git push origin v${{ env.VERSION }}
