@@ -23,16 +23,13 @@ jobs:
       # Run the script to increment the version
       - name: Run increment_version.sh
         id: version
-        run: ./increment_version.sh
-
-      # Read the version from the file
-      - name: Read version from file
-        id: read_version
-        run: echo "::set-output name=version::$(cat version.txt)"
+        run: |
+          ./increment_version.sh
+          echo "VERSION=$(cat version.txt)" >> $GITHUB_OUTPUT
 
       # Create and push tag
       - name: Create and push tag
-        if: steps.read_version.outputs.version != '1.0.0'
+        if: steps.version.outputs.version != '1.0.0'
         run: |
-          git tag v${{ steps.read_version.outputs.version }}
+          git tag v${{ steps.version.outputs.version }}
           git push origin --tags
