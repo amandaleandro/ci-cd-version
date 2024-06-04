@@ -56,11 +56,3 @@ jobs:
         env:
           VERSION: ${{ steps.get_version.outputs.VERSION }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-
-
-
-
-
-
-
-          
