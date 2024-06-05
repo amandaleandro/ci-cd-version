@@ -49,10 +49,8 @@ jobs:
         id: determine_version
         if: steps.first_commit.outputs.is_first_commit == '1' || steps.tag_exists.outputs.tag_exists == '' # se for o primeiro commit ou não houver uma tag
         run: echo "::set-output name=version::v0.0.1"
-        
-      - name: Determine version from tags
-        if: steps.first_commit.outputs.is_first_commit != '1' && steps.tag_exists.outputs.tag_exists != ''
-        run: echo "::set-output name=version::$(git describe --tags --abbrev=0)"
+        else:
+          run: echo "::set-output name=version::$(git describe --tags --abbrev=0)"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
@@ -61,63 +59,6 @@ jobs:
           file: ./Dockerfile # caminho para o Dockerfile
           push: true
           tags: ${{ github.repository }}:v${{ steps.determine_version.outputs.version }}
-          name: Docker Build & Push
-
-          on:
-            push:
-              branches:
-                - main # ajuste conforme sua branch principal
-          
-          jobs:
-            build:
-              runs-on: ubuntu-latest
-          
-              steps:
-                - name: Checkout do código
-                  uses: actions/checkout@v2
-          
-                - name: Validate Dockerfile
-                  run: docker build --pull --no-cache -t ${{ github.repository }}:${{ github.ref_name }} -f Dockerfile .
-          
-                - name: Set up Docker Buildx
-                  uses: docker/setup-buildx-action@v1
-          
-                - name: Check if package.json exists
-                  id: check_package_json
-                  run: |
-                    if [ -f "package.json" ]; then
-                      echo "::set-output name=package_json_exist::true"
-                    else
-                      echo "::set-output name=package_json_exist::false"
-                    fi
-          
-                - name: Install dependencies
-                  if: steps.check_package_json.outputs.package_json_exist == 'true'
-                  run: npm install
-          
-                - name: Check if it's the first commit
-                  id: first_commit
-                  run: echo "::set-output name=is_first_commit::$(git rev-list --count HEAD)"
-          
-                - name: Check if tag exists
-                  id: tag_exists
-                  run: echo "::set-output name=tag_exists::$(git describe --exact-match --tags $(git log -n1 --pretty='%h'))"
-          
-                - name: Determine version
-                  id: determine_version
-                  if: steps.first_commit.outputs.is_first_commit == '1' || steps.tag_exists.outputs.tag_exists == '' # se for o primeiro commit ou não houver uma tag
-                  run: echo "::set-output name=version::v0.0.1"
-                  else:
-                    run: echo "::set-output name=version::$(git describe --tags --abbrev=0)"
-          
-                - name: Build and push Docker image
-                  uses: docker/build-push-action@v2
-                  with:
-                    context: .
-                    file: ./Dockerfile # caminho para o Dockerfile
-                    push: true
-                    tags: ${{ github.repository }}:v${{ steps.determine_version.outputs.version }}
-                  env:
-                    DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-                    DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
