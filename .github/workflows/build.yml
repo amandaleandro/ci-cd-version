@@ -31,8 +31,10 @@ jobs:
         id: determine_version
         if: steps.first_commit.outputs.is_first_commit == '1' || steps.tag_exists.outputs.tag_exists == ''  # se for o primeiro commit ou não houver uma tag
         run: echo "::set-output name=version::v0.0.1"
-        else:
-            run: echo "No version found."
+
+      - name: Determine version from tags
+        id: determine_version_tags
+        if: steps.first_commit.outputs.is_first_commit != '1' && steps.tag_exists.outputs.tag_exists != ''
         run: echo "::set-output name=version::$(git describe --tags --abbrev=0)"
 
       - name: Run tests
@@ -47,4 +49,3 @@ jobs:
           file: ./Dockerfile  # caminho para o Dockerfile
           push: true
           tags: ${{ github.repository }}:${{ steps.determine_version.outputs.version }}
-    
