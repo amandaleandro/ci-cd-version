@@ -49,8 +49,10 @@ jobs:
         id: determine_version
         if: steps.first_commit.outputs.is_first_commit == '1' || steps.tag_exists.outputs.tag_exists == '' # se for o primeiro commit ou não houver uma tag
         run: echo "::set-output name=version::v0.0.1"
-        else:
-          run: echo "::set-output name=version::$(git describe --tags --abbrev=0)"
+
+      - name: Determine version from tags
+        if: steps.first_commit.outputs.is_first_commit != '1' && steps.tag_exists.outputs.tag_exists != ''
+        run: echo "::set-output name=version::$(git describe --tags --abbrev=0)"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
