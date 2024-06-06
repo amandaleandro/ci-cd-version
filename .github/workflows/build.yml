@@ -37,21 +37,9 @@ jobs:
       - name: Determine version
         id: determine_version
         run: |
-          commits=$(git log -1 --pretty=%B)
-          if echo "$commits" | grep -q "BREAKING CHANGE"; then
-            echo "increment=major" >> $GITHUB_ENV
-          elif echo "$commits" | grep -q "feat:"; then
-            echo "increment=minor" >> $GITHUB_ENV
-          else
-            echo "increment=patch" >> $GITHUB_ENV
-          fi
-
-      - name: Create new tag if it doesn't exist
-        id: create_tag
-        run: |
           current_version=$(git tag | sort -V | tail -n1)
           IFS='.' read -r major minor patch <<< "$current_version"
-          increment=$(echo ${{ env.increment }})
+          increment=$(echo major)
           case $increment in
             major)
               new_version="v.$(($major + 1)).0.0"
@@ -81,6 +69,11 @@ jobs:
             esac
           fi
           
+          echo "new_version=$new_version" >> $GITHUB_ENV
+
+      - name: Create new tag
+        id: create_tag
+        run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git tag $new_version
