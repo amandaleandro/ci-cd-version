@@ -39,7 +39,16 @@ jobs:
         run: |
           current_version=$(git tag | sort -V | tail -n1)
           IFS='.' read -r major minor patch <<< "$current_version"
-          increment=$(echo major)
+          
+          commits=$(git log -1 --pretty=%B)
+          if echo "$commits" | grep -q "BREAKING CHANGE"; then
+            increment="major"
+          elif echo "$commits" | grep -q "feat:"; then
+            increment="minor"
+          else
+            increment="patch"
+          fi
+          
           case $increment in
             major)
               new_version="v.$(($major + 1)).0.0"
@@ -52,7 +61,6 @@ jobs:
               ;;
           esac
           
-          # Verifica se a tag já existe e incrementa até encontrar uma versão única
           while git rev-parse $new_version >/dev/null 2>&1; do
             echo "A versão $new_version já existe. Incrementando..."
             IFS='.' read -r major minor patch <<< "$new_version"
