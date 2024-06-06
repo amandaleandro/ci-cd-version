@@ -46,7 +46,7 @@ jobs:
         id: determine_version
         run: |
           if [ "$is_first_commit" == "1" ] || [ -z "$tag_exists" ]; then
-            echo "version=v0.0.1" >> $GITHUB_ENV
+            echo "version=0.0.1" >> $GITHUB_ENV
           else
             echo "version=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
           fi
@@ -63,4 +63,4 @@ jobs:
           context: .
           file: ./Dockerfile # caminho para o Dockerfile
           push: true
-          tags: ${{ github.repository }}:v${{ env.version }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:v${{ env.version }}
