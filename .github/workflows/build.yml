@@ -44,7 +44,6 @@ jobs:
             echo "increment=minor" >> $GITHUB_ENV
           else
             echo "increment=patch" >> $GITHUB_ENV
-          fi
 
       - name: Determine version
         id: determine_version
@@ -53,7 +52,7 @@ jobs:
           if [ -z "$latest_tag" ]; then
             latest_tag="v.0.0.0"
           fi
-          
+
           IFS='.' read -r -a version_parts <<< "${latest_tag#v}"
 
           major=${version_parts[0]}
@@ -79,7 +78,7 @@ jobs:
           echo "new_version=${new_version}" >> $GITHUB_ENV
 
       - name: Debug version
-        run: echo "New version: ${{ env.new_version }}"
+        run: "New version: ${{ env.new_version }}"
 
       - name: Create new tag
         id: create_tag
