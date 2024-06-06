@@ -19,7 +19,23 @@ jobs:
       - name: Validate Dockerfile
         run: docker build --pull --no-cache -t ${{ github.repository }}:${{ github.ref_name }} -f Dockerfile .
 
-      - name: Determine latest tag
+      - name: Check if package.json exists
+        id: check_package_json
+        run: |
+          if [ -f "package.json" ]; then
+            echo "package_json_exist=true" >> $GITHUB_ENV
+          else
+            echo "package_json_exist=false" >> $GITHUB_ENV
+          fi
+
+      - name: Run tests and install dependencies
+        if: env.package_json_exist == 'true'
+        run: |
+          npm install
+          npm test
+
+      - name: Determine version
+        id: determine_version
         run: |
           if latest_tag=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null); then
             IFS='.' read -r major minor patch <<< "$latest_tag"
@@ -39,7 +55,7 @@ jobs:
             new_version="v.0.0.1"
           fi
           echo "new_version=$new_version" >> $GITHUB_ENV
-        shell: /usr/bin/bash --noprofile --norc -e -o pipefail
+        shell: bash
 
       - name: Create new tag
         if: env.new_version != 'v.0.0.1'
@@ -48,21 +64,6 @@ jobs:
           git config user.email "github-actions@github.com"
           git tag ${{ env.new_version }}
           git push origin ${{ env.new_version }}
-
-      - name: Check if package.json exists
-        id: check_package_json
-        run: |
-          if [ -f "package.json" ]; then
-            echo "package_json_exist=true" >> $GITHUB_ENV
-          else
-            echo "package_json_exist=false" >> $GITHUB_ENV
-          fi
-
-      - name: Run tests and install dependencies
-        if: env.package_json_exist == 'true'
-        run: |
-          npm install
-          npm test
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
