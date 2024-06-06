@@ -34,8 +34,8 @@ jobs:
           npm install
           npm test
 
-      - name: Determine version
-        id: determine_version
+      - name: Check latest version
+        id: check_latest_version
         run: |
           current_version=$(git tag | sort -V | tail -n1)
           IFS='.' read -r major minor patch <<< "$current_version"
@@ -51,7 +51,7 @@ jobs:
               new_version="v.$major.$minor.$(($patch + 1))"
               ;;
           esac
-          
+
           # Verifica se a tag já existe
           if git rev-parse $new_version >/dev/null 2>&1; then
             echo "A versão $new_version já existe. Incrementando..."
@@ -68,7 +68,7 @@ jobs:
                 ;;
             esac
           fi
-          
+
           echo "new_version=$new_version" >> $GITHUB_ENV
 
       - name: Create new tag
@@ -91,4 +91,4 @@ jobs:
           context: .
           file: ./Dockerfile # caminho para o Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ steps.determine_version.outputs.new_version }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ steps.check_latest_version.outputs.new_version }}
