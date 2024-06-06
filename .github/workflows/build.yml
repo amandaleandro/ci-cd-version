@@ -3,7 +3,7 @@ name: Docker Build & Push
 on:
   push:
     branches:
-      - main # ajuste conforme sua branch principal
+      - main
 
 jobs:
   build:
@@ -19,25 +19,9 @@ jobs:
       - name: Validate Dockerfile
         run: docker build --pull --no-cache -t ${{ github.repository }}:${{ github.ref_name }} -f Dockerfile .
 
-      - name: Check if package.json exists
-        id: check_package_json
+      - name: Determine latest tag
         run: |
-          if [ -f "package.json" ]; then
-            echo "package_json_exist=true" >> $GITHUB_ENV
-          else
-            echo "package_json_exist=false" >> $GITHUB_ENV
-          fi
-
-      - name: Run tests and install dependencies
-        if: env.package_json_exist == 'true'
-        run: |
-          npm install
-          npm test
-
-      - name: Determine version
-        id: determine_version
-        run: |
-          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1` main)
           if [ -z "$latest_tag" ]; then
             new_version="v.0.0.1"
           else
@@ -56,6 +40,7 @@ jobs:
             esac
           fi
           echo "new_version=$new_version" >> $GITHUB_ENV
+        shell: bash
 
       - name: Create new tag
         if: env.new_version != 'v.0.0.1'
@@ -75,13 +60,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: ./Dockerfile # caminho para o Dockerfile
+          file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ steps.determine_version.outputs.new_version }}
-
-
-
-
-
-
-          
