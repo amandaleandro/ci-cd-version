@@ -37,27 +37,31 @@ jobs:
       - name: Determine version
         id: determine_version
         run: |
-          if latest_tag=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null); then
-            IFS='.' read -r major minor patch <<< "$latest_tag"
-            increment=$(echo major)
-            case $increment in
-              major)
-                new_version="v.$(($major + 1)).0.0"
-                ;;
-              minor)
-                new_version="v.$major.$(($minor + 1)).0"
-                ;;
-              patch)
-                new_version="v.$major.$minor.$(($patch + 1))"
-                ;;
-            esac
+          if [ -f last_successful_version.txt ]; then
+            latest_version=$(cat last_successful_version.txt)
           else
-            new_version="v.0.0.1"
+            latest_version="v0.0.0"
           fi
+          IFS='.' read -r major minor patch <<< "${latest_version#v}"
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            increment="patch"
+          fi
+          case $increment in
+            major)
+              new_version="v$(($major + 1)).0.0"
+              ;;
+            minor)
+              new_version="v$major.$(($minor + 1)).0"
+              ;;
+            patch)
+              new_version="v$major.$minor.$(($patch + 1))"
+              ;;
+          esac
           echo "new_version=$new_version" >> $GITHUB_ENV
+          echo "new_version=$new_version"
 
       - name: Create new tag
-        if: env.new_version != 'v.0.0.1'
+        if: env.new_version != 'v0.0.0'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -73,8 +77,20 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
-            context: .
-            file: ./Dockerfile
-            push: true
-            tags: amandalscarmo/ci-cd-version:${{ steps.determine_version.outputs.new_version }}
-        
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: amandalscarmo/ci-cd-version:${{ env.new_version }}
+
+      - name: Store last successful version
+        if: always()
+        run: echo ${{ env.new_version }} > last_successful_version.txt
+
+      - name: Commit last successful version
+        if: success()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add last_successful_version.txt
+          git commit -m "Update last successful version to ${{ env.new_version }}"
+          git push origin main
