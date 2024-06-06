@@ -3,7 +3,7 @@ name: Docker Build & Push
 on:
   push:
     branches:
-      - main # ajuste conforme sua branch principal
+      - main
 
 jobs:
   build:
@@ -13,29 +13,31 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-
       - name: Validate Dockerfile
         run: docker build --pull --no-cache -t ${{ github.repository }}:${{ github.ref_name }} -f Dockerfile .
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
 
       - name: Check if package.json exists
         id: check_package_json
         run: |
           if [ -f "package.json" ]; then
-            echo "package_json_exist=true" >> $GITHUB_ENV
+            echo "::set-output name=package_json_exist::true"
           else
-            echo "package_json_exist=false" >> $GITHUB_ENV
+            echo "::set-output name=package_json_exist::false"
           fi
 
-      - name: Run tests and install dependencies
-        if: env.package_json_exist == 'true'
+      - name: Install dependencies
+        if: steps.check_package_json.outputs.package_json_exist == 'true'
+        run: npm install
+
+      - name: Run tests
+        if: steps.check_package_json.outputs.package_json_exist == 'true'
         run: |
-          npm install
           npm test
 
       - name: Determine version increment
-        id: determine_increment
         run: |
           commits=$(git log -1 --pretty=%B)
           if echo "$commits" | grep -q "BREAKING CHANGE"; then
@@ -44,62 +46,30 @@ jobs:
             echo "increment=minor" >> $GITHUB_ENV
           else
             echo "increment=patch" >> $GITHUB_ENV
+          fi
+        shell: bash
+
+      - name: Check if it's the first commit
+        id: first_commit
+        run: echo "::set-output name=is_first_commit::$(git rev-list --count HEAD)"
+
+      - name: Check if tag exists
+        id: tag_exists
+        run: echo "::set-output name=tag_exists::$(git describe --exact-match --tags $(git log -n1 --pretty='%h'))"
 
       - name: Determine version
         id: determine_version
-        run: |
-          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
-          if [ -z "$latest_tag" ]; then
-            latest_tag="v.0.0.0"
-          fi
-
-          IFS='.' read -r -a version_parts <<< "${latest_tag#v}"
-
-          major=${version_parts[0]}
-          minor=${version_parts[1]}
-          patch=${version_parts[2]}
-
-          case "${{ env.increment }}" in
-            major)
-              major=$((major + 1))
-              minor=0
-              patch=0
-              ;;
-            minor)
-              minor=$((minor + 1))
-              patch=0
-              ;;
-            patch)
-              patch=$((patch + 1))
-              ;;
-          esac
-
-          new_version="v.${major}.${minor}.${patch}"
-          echo "new_version=${new_version}" >> $GITHUB_ENV
-
-      - name: Debug version
-        run: "New version: ${{ env.new_version }}"
-
-      - name: Create new tag
-        id: create_tag
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git tag ${{ env.new_version }}
-          git push origin ${{ env.new_version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+        if: steps.first_commit.outputs.is_first_commit == '1' || steps.tag_exists.outputs.tag_exists == '' # se for o primeiro commit ou não houver uma tag
+        run: echo "::set-output name=version::v0.0.1"
+        
+      - name: Determine version from tags
+        if: steps.first_commit.outputs.is_first_commit != '1' && steps.tag_exists.outputs.tag_exists != ''
+        run: echo "::set-output name=version::$(git describe --tags --abbrev=0)"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: ./Dockerfile # caminho para o Dockerfile
+          file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}
+          tags: ${{ github.repository }}:v${{ steps.determine_version.outputs.version }}
