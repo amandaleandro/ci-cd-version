@@ -73,7 +73,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: amandalscarmo/ci-cd-version:${{ steps.determine_version.outputs.new_version }}
+            context: .
+            file: ./Dockerfile
+            push: true
+            tags: amandalscarmo/ci-cd-version:${{ steps.determine_version.outputs.new_version }}
+        
