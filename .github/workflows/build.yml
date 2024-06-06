@@ -43,9 +43,17 @@ jobs:
             latest_version="v0.0.0"
           fi
           IFS='.' read -r major minor patch <<< "${latest_version#v}"
-          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+
+          # Check the latest commit message for specific keywords
+          latest_commit_message=$(git log -1 --pretty=%B)
+          if [[ "$latest_commit_message" == *"BREAKING CHANGE"* ]]; then
+            increment="major"
+          elif [[ "$latest_commit_message" == *"feature"* ]]; then
+            increment="minor"
+          else
             increment="patch"
           fi
+
           case $increment in
             major)
               new_version="v$(($major + 1)).0.0"
