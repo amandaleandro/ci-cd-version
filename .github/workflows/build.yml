@@ -34,16 +34,52 @@ jobs:
           npm install
           npm test
 
+      - name: Determine version increment
+        id: determine_increment
+        run: |
+          commits=$(git log -1 --pretty=%B)
+          if echo "$commits" | grep -q "BREAKING CHANGE"; then
+            echo "increment=major" >> $GITHUB_ENV
+          elif echo "$commits" | grep -q "feat:"; then
+            echo "increment=minor" >> $GITHUB_ENV
+          else
+            echo "increment=patch" >> $GITHUB_ENV
+          fi
+
       - name: Determine version
         id: determine_version
         run: |
-          if git rev-parse "v.0.0.1" >/dev/null 2>&1; then
-            latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
-            new_tag=$(echo $latest_tag | awk -F. -v OFS=. '{$NF += 1 ; print}')
-            echo "new_version=v.$new_tag" >> $GITHUB_ENV
-          else
-            echo "new_version=v.0.0.1" >> $GITHUB_ENV
+          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          if [ -z "$latest_tag" ]; then
+            latest_tag="v.0.0.0"
           fi
+          
+          IFS='.' read -r -a version_parts <<< "${latest_tag#v}"
+
+          major=${version_parts[0]}
+          minor=${version_parts[1]}
+          patch=${version_parts[2]}
+
+          case "${{ env.increment }}" in
+            major)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              ;;
+            minor)
+              minor=$((minor + 1))
+              patch=0
+              ;;
+            patch)
+              patch=$((patch + 1))
+              ;;
+          esac
+
+          new_version="v.${major}.${minor}.${patch}"
+          echo "new_version=${new_version}" >> $GITHUB_ENV
+
+      - name: Debug version
+        run: echo "New version: ${{ env.new_version }}"
 
       - name: Create new tag
         id: create_tag
@@ -52,6 +88,8 @@ jobs:
           git config user.email "github-actions@github.com"
           git tag ${{ env.new_version }}
           git push origin ${{ env.new_version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
