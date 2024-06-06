@@ -37,21 +37,9 @@ jobs:
       - name: Determine version
         id: determine_version
         run: |
-          commits=$(git log -1 --pretty=%B)
-          if echo "$commits" | grep -q "BREAKING CHANGE"; then
-            echo "increment=major" >> $GITHUB_ENV
-          elif echo "$commits" | grep -q "feat:"; then
-            echo "increment=minor" >> $GITHUB_ENV
-          else
-            echo "increment=patch" >> $GITHUB_ENV
-          fi
-
-      - name: Create new tag
-        id: create_tag
-        run: |
           current_version=$(git tag | sort -V | tail -n1)
           IFS='.' read -r major minor patch <<< "$current_version"
-          increment=$(echo ${{ env.increment }})
+          increment=$(echo major)
           case $increment in
             major)
               new_version="v.$(($major + 1)).0.0"
@@ -63,9 +51,9 @@ jobs:
               new_version="v.$major.$minor.$(($patch + 1))"
               ;;
           esac
-
-          # Verifica se a tag já existe
-          if git rev-parse $new_version >/dev/null 2>&1; then
+          
+          # Verifica se a tag já existe e incrementa até encontrar uma versão única
+          while git rev-parse $new_version >/dev/null 2>&1; do
             echo "A versão $new_version já existe. Incrementando..."
             IFS='.' read -r major minor patch <<< "$new_version"
             case $increment in
@@ -79,12 +67,17 @@ jobs:
                 new_version="v.$major.$minor.$(($patch + 1))"
                 ;;
             esac
-          fi
+          done
+          
+          echo "::set-output name=new_version::$new_version"
 
+      - name: Create new tag
+        id: create_tag
+        run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git tag $new_version
-          git push origin $new_version
+          git tag ${{ steps.determine_version.outputs.new_version }}
+          git push origin ${{ steps.determine_version.outputs.new_version }}
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
