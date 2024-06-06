@@ -55,7 +55,6 @@ jobs:
             new_version="v.0.0.1"
           fi
           echo "new_version=$new_version" >> $GITHUB_ENV
-        shell: bash
 
       - name: Create new tag
         if: env.new_version != 'v.0.0.1'
