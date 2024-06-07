@@ -1,1 +1,1 @@
-amandalscarmo/ci-cd-version:v4.0.0
+amandalscarmo/ci-cd-version:v4.0.1
