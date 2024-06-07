@@ -1,7 +1,7 @@
 
 FROM node:14-alpine
-ARG VERSION
-ENV VERSION ${VERSION}
+ARG version
+ENV version=${version}
 WORKDIR /app
 COPY . .
 RUN if [ -f "package.json" ]; then npm install; fi

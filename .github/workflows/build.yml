@@ -26,7 +26,6 @@ jobs:
             echo "package_json_exist=true" >> $GITHUB_ENV
           else
             echo "package_json_exist=false" >> $GITHUB_ENV
-          fi
 
       - name: Run tests and install dependencies
         if: env.package_json_exist == 'true'
@@ -106,7 +105,7 @@ jobs:
 
       - name: Save Docker image name
         if: success()
-        run: echo "amandalscarmo/ci-cd-version:${{ env.new_version }}" > docker_image_name.txt
+        run: echo "${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}" > docker_image_name.txt
 
       - name: Commit Docker image name
         if: success()
