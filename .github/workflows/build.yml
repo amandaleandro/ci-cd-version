@@ -44,7 +44,6 @@ jobs:
           fi
           IFS='.' read -r major minor patch <<< "${latest_version#v}"
 
-          # Check the latest commit message for specific keywords
           latest_commit_message=$(git log -1 --pretty=%B)
           if [[ "$latest_commit_message" == *"BREAKING CHANGE"* ]]; then
             increment="major"
@@ -88,7 +87,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: amandalscarmo/ci-cd-version:${{ env.new_version }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}
 
       - name: Store last successful version
         if: always()
@@ -101,4 +100,17 @@ jobs:
           git config user.email "github-actions@github.com"
           git add last_successful_version.txt
           git commit -m "Update last successful version to ${{ env.new_version }}"
+          git push origin main
+
+      - name: Save Docker image name
+        if: success()
+        run: echo "${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}" > docker_image_name.txt
+
+      - name: Commit Docker image name
+        if: success()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add docker_image_name.txt
+          git commit -m "Save Docker image name"
           git push origin main
