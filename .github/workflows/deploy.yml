@@ -3,12 +3,11 @@ on:
       workflows: ["Docker Build & Push"]
       types:
         - completed
-  
-  env:
+env:
     EMAIL: ${{ secrets.EMAIL }}
     DOMAIN: ${{ secrets.DOMAIN }}
-  
-  jobs:
+    
+jobs:
     helm-deployments:
       runs-on: ubuntu-latest
       steps:
