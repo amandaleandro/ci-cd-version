@@ -26,6 +26,7 @@ jobs:
             echo "package_json_exist=true" >> $GITHUB_ENV
           else
             echo "package_json_exist=false" >> $GITHUB_ENV
+          fi
 
       - name: Run tests and install dependencies
         if: env.package_json_exist == 'true'
