@@ -82,12 +82,14 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: .
           file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}
+          build-args: |
+              version=${{ env.new_version }}
 
       - name: Store last successful version
         if: always()
@@ -104,7 +106,7 @@ jobs:
 
       - name: Save Docker image name
         if: success()
-        run: echo "${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}" > docker_image_name.txt
+        run: echo "amandalscarmo/ci-cd-version:${{ env.new_version }}" > docker_image_name.txt
 
       - name: Commit Docker image name
         if: success()
