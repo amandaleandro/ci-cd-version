@@ -29,8 +29,8 @@ Contribuições são bem-vindas! Siga as etapas abaixo:
 2. Crie uma nova branch: `git checkout -b minha-branch`
 3. Faça as alterações necessárias e commit: `git commit -am 'Adicionei uma nova funcionalidade'`
 4. Envie as alterações para o repositório remoto: `git push origin minha-branch`
-5. Abra um pull request
+5.  um pull request
 
-## Licença
+#fseffewfwfwe 
 
-Este projeto está licenciado sob a [Licença XYZ](link-para-licenca).
+Estestw licenciado sob a [Licença XYZ](link-para-licenca).
