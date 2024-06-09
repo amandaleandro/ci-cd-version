@@ -10,15 +10,86 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout do código
         uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Retry Docker build
+      - name: Lint Dockerfile
+        run: docker run --rm -i hadolint/hadolint < Dockerfile || true
+
+      - name: Output Dockerfile stages for debugging
         run: |
-          docker build --pull --no-cache -t ninesbr/nines-callcenter:main -f Dockerfile . || true
+          awk '/^FROM / {print $2 " -> " $3}' Dockerfile
+
+      - name: Build base stages to leverage cache
+        run: |
+          docker build --target base --pull --no-cache -t ninesbr/nines-callcenter:base -f Dockerfile .
+          docker build --target builder --pull --no-cache -t ninesbr/nines-callcenter:builder -f Dockerfile .
+
+      - name: Validate Dockerfile
+        run: |
+          docker build --pull --no-cache -t ninesbr/nines-callcenter:main -f Dockerfile . || {
+            echo "Dockerfile validation failed due to circular dependency or other issues.";
+            exit 1;
+          }
+
+      - name: Check if package.json exists
+        id: check_package_json
+        run: |
+          if [ -f "package.json" ]; then
+            echo "package_json_exist=true" >> $GITHUB_ENV
+          else
+            echo "package_json_exist=false" >> $GITHUB_ENV
+          fi
+
+      - name: Run tests and install dependencies
+        if: env.package_json_exist == 'true'
+        run: |
+          npm install
+          npm test
+
+      - name: Determine version
+        id: determine_version
+        run: |
+          if [ -f last_successful_version.txt ]; then
+            latest_version=$(cat last_successful_version.txt)
+          else
+            latest_version="v0.0.0"
+          fi
+          IFS='.' read -r major minor patch <<< "${latest_version#v}"
+
+          latest_commit_message=$(git log -1 --pretty=%B)
+          if [[ "$latest_commit_message" == *"BREAKING CHANGE"* ]]; then
+            increment="major"
+          elif [[ "$latest_commit_message" == *"feature"* ]]; then
+            increment="minor"
+          else
+            increment="patch"
+          fi
+
+          case $increment in
+            major)
+              new_version="v$(($major + 1)).0.0"
+              ;;
+            minor)
+              new_version="v$major.$(($minor + 1)).0"
+              ;;
+            patch)
+              new_version="v$major.$minor.$(($patch + 1))"
+              ;;
+          esac
+          echo "new_version=$new_version" >> $GITHUB_ENV
+          echo "new_version=$new_version"
+
+      - name: Create new tag
+        if: env.new_version != 'v0.0.0'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag ${{ env.new_version }}
+          git push origin ${{ env.new_version }}
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
@@ -26,16 +97,38 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Push Docker image
-        run: docker push ninesbr/nines-callcenter:main
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}
+          build-args: |
+              version=${{ env.new_version }}
 
       - name: Store last successful version
-        run: echo "${{ github.sha }}" > last_successful_version.txt
+        if: always()
+        run: echo ${{ env.new_version }} > last_successful_version.txt
 
       - name: Commit last successful version
+        if: success()
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add last_successful_version.txt
-          git commit -m "Update last successful version"
+          git commit -m "Update last successful version to ${{ env.new_version }}"
+          git push origin main
+
+      - name: Save Docker image name
+        if: success()
+        run: echo "${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}" > docker_image_name.txt
+
+      - name: Commit Docker image name
+        if: success()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add docker_image_name.txt
+          git commit -m "Save Docker image name"
           git push origin main
