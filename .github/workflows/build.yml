@@ -20,15 +20,6 @@ jobs:
         run: |
           docker run --rm -i hadolint/hadolint < Dockerfile || true
 
-      - name: Output Dockerfile stages for debugging
-        run: |
-          awk '/^FROM / {print $2 " -> " $3}' Dockerfile
-
-      - name: Build base stages to leverage cache
-        run: |
-          docker build --target base --pull --no-cache -t ninesbr/nines-callcenter:base -f Dockerfile .
-          docker build --target builder --pull --no-cache -t ninesbr/nines-callcenter:builder -f Dockerfile .
-
       - name: Validate Dockerfile
         run: |
           docker build --pull --no-cache -t ninesbr/nines-callcenter:main -f Dockerfile . || {
