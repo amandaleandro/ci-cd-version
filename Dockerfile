@@ -1,28 +1,25 @@
 FROM node:18.18-alpine3.18 as production
 
-ARG version
+arg version
 
-ENV version=${version}
+env version=${version}
 
-USER node
+user node
 
-RUN mkdir -p /home/node/app
+run mkdir -p /home/node/app
 
-WORKDIR /home/node/app
+workdir /home/node/app
 
-# Etapa 1: Copia apenas os arquivos de package.json
-COPY --chown=node:node package*.json ./
+copy --from=production --chown=node:node /home/node/app/package*.json ./
+run npm ci --omit=dev
 
-# Instalação das dependências
-RUN npm ci --omit=dev
+copy --from=production --chown=node:node /home/node/app .
 
-# Etapa 2: Copia o restante dos arquivos
-COPY --chown=node:node . .
+expose 3000
 
-EXPOSE 3000
+env tz=america/sao_paulo
 
-ENV TZ=America/Sao_Paulo
+env node_env=prod
 
-ENV NODE_ENV=prod
-
+# CMD [ "npm", "run", "start:prod" ]
 CMD ./node_modules/.bin/ts-node ./node_modules/.bin/typeorm migration:run -d src/orm/config/ormconfig.prod.ts && npm run start:prod
