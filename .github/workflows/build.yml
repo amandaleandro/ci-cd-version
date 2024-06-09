@@ -17,24 +17,10 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: Lint Dockerfile
-        run: |
-          docker run --rm -i hadolint/hadolint < Dockerfile
+        run: docker run --rm -i hadolint/hadolint < Dockerfile
 
-      - name: Output Dockerfile stages for debugging
-        run: |
-          awk '/^FROM / {print $2 " -> " $3}' Dockerfile
-
-      - name: Build base stages to leverage cache
-        run: |
-          docker build --target base --pull --no-cache -t ninesbr/nines-callcenter:base -f Dockerfile .
-          docker build --target builder --pull --no-cache -t ninesbr/nines-callcenter:builder -f Dockerfile .
-      
       - name: Validate Dockerfile
-        run: |
-          docker build --pull --no-cache -t ninesbr/nines-callcenter:main -f Dockerfile . || {
-            echo "Dockerfile validation failed due to circular dependency or other issues.";
-            exit 1;
-          }
+        run: docker build --pull --no-cache -t ninesbr/nines-callcenter:main -f Dockerfile .
 
       - name: Check if package.json exists
         id: check_package_json
