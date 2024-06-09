@@ -6,11 +6,11 @@ on:
       - main
 
 jobs:
-  build:
+  build_and_push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout do código
+      - name: Checkout code
         uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
@@ -78,22 +78,6 @@ jobs:
           git tag ${{ env.new_version }}
           git push origin ${{ env.new_version }}
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}
-          build-args: |
-              version=${{ env.new_version }}
-
       - name: Store last successful version
         if: always()
         run: echo ${{ env.new_version }} > last_successful_version.txt
@@ -107,9 +91,30 @@ jobs:
           git commit -m "Update last successful version to ${{ env.new_version }}"
           git push origin main
 
+  login_and_push_docker:
+    runs-on: ubuntu-latest
+    needs: build_and_push
+
+    steps:
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ needs.build_and_push.outputs.new_version }}
+          build-args: |
+              version=${{ needs.build_and_push.outputs.new_version }}
+
       - name: Save Docker image name
         if: success()
-        run: echo "${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}" > docker_image_name.txt
+        run: echo "${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ needs.build_and_push.outputs.new_version }}" > docker_image_name.txt
 
       - name: Commit Docker image name
         if: success()
