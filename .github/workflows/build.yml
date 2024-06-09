@@ -19,8 +19,14 @@ jobs:
       - name: Lint Dockerfile
         run: docker run --rm -i hadolint/hadolint < Dockerfile
 
-      - name: Validate Dockerfile
-        run: docker build --pull --no-cache -t ninesbr/nines-callcenter:main -f Dockerfile .
+      - name: Validate base stage
+        run: docker build --target base --pull --no-cache -t ninesbr/nines-callcenter:base -f Dockerfile .
+
+      - name: Validate builder stage
+        run: docker build --target builder --pull --no-cache -t ninesbr/nines-callcenter:builder -f Dockerfile .
+
+      - name: Validate production stage
+        run: docker build --target production --pull --no-cache -t ninesbr/nines-callcenter:production -f Dockerfile .
 
       - name: Check if package.json exists
         id: check_package_json
