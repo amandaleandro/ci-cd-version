@@ -22,7 +22,7 @@ jobs:
 
       - name: Validate Dockerfile
         run: |
-          docker build --pull --no-cache -t ninesbr/nines-callcenter:main -f Dockerfile . || {
+          docker build --pull --no-cache -t ninesbr/nines-callcenter:main -f Dockerfile.base . || {
             echo "Dockerfile validation failed due to circular dependency or other issues.";
             exit 1;
           }
