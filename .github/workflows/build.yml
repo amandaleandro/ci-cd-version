@@ -17,7 +17,8 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: Lint Dockerfile
-        run: docker run --rm -i hadolint/hadolint < Dockerfile || true
+        run: |
+          docker run --rm -i hadolint/hadolint < Dockerfile || true
 
       - name: Output Dockerfile stages for debugging
         run: |
