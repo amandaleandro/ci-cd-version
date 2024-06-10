@@ -96,14 +96,6 @@ jobs:
           git commit -m "Update last successful version to ${{ env.new_version }}"
           git push origin main
 
-      - name: Build and push development Docker image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          dockerfile: Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}:development-${{ env.new_version }}
-
       - name: Build and push production Docker image
         uses: docker/build-push-action@v2
         with:
