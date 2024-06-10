@@ -44,28 +44,28 @@ jobs:
         id: determine_version
         run: |
           #!/usr/bin/env bash
-
+  
           # Determine the latest version from the file or set a default
           if [ -f last_successful_version.txt ]; then
               latest_version=$(cat last_successful_version.txt)
           else
               latest_version="v1.0.1"
           fi
-
+  
           # Split the version number into major, minor, and patch
           IFS='.' read -r major minor patch <<< "${latest_version#v}"
-
+  
           # Determine the increment based on commit messages
           increment="patch"
           while IFS= read -r line; do
-              if [[ "$line" =~ ^[[:space:]]*BREAKING CHANGE ]]; then
+              if [[ "$line" =~ ^[[:space:]]*BREAKING[[:space:]]+CHANGE ]]; then
                   increment="major"
                   break
               elif [[ "$line" =~ ^[[:space:]]*feat ]]; then
                   increment="minor"
               fi
           done < <(git log --pretty=%B -n 20)
-
+  
           # Increment version number accordingly
           case $increment in
               major)
@@ -78,7 +78,7 @@ jobs:
                   new_version="v$major.$minor.$((patch + 1))"
                   ;;
           esac
-
+  
           # Set the new version as an output variable for GitHub Actions
           echo "new_version=$new_version" >> $GITHUB_ENV
           echo "new_version=$new_version"
