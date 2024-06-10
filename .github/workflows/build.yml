@@ -25,15 +25,6 @@ jobs:
             exit 1
           fi
 
-      - name: Validate Dockerfiledev
-        run: |
-          if [ -f Dockerfiledev ]; then
-            echo "Dockerfiledev validation passed."
-          else
-            echo "Dockerfiledev not found."
-            exit 1
-          fi
-
       - name: Check if package.json exists
         id: check_package_json
         run: |
@@ -105,7 +96,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image for production
+      - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -113,17 +104,15 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}
           build-args: |
-              version=${{ env.new_version }}
-
-      - name: Build and push Docker image for development
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: ./Dockerfiledev
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:dev-${{ env.new_version }}
-          build-args: |
-              version=${{ env.new_version }}
+            version=${{ env.new_version }}
+          load: false
+          no-cache: false
+          pull: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          package_json_exist: ${{ env.package_json_exist }}
+          new_version: ${{ env.new_version }}
+          tag_exists: ${{ env.tag_exists }}
 
       - name: Store last successful version
         if: always()
@@ -150,4 +139,3 @@ jobs:
           git add docker_image_name.txt
           git commit -m "Save Docker image name"
           git push origin main
-
