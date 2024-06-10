@@ -25,15 +25,6 @@ jobs:
             exit 1
           fi
 
-      - name: Validate Dockerfiledev
-        run: |
-          if [ -f Dockerfiledev ]; then
-            echo "Dockerfiledev validation passed."
-          else
-            echo "Dockerfiledev not found."
-            exit 1
-          fi
-
       - name: Check if package.json exists
         id: check_package_json
         run: |
@@ -55,19 +46,23 @@ jobs:
           if [ -f last_successful_version.txt ]; then
             latest_version=$(cat last_successful_version.txt)
           else
-            latest_version="v0.0.0"
+            latest_version="v1.0.1"
           fi
+
           IFS='.' read -r major minor patch <<< "${latest_version#v}"
 
-          latest_commit_message=$(git log -1 --pretty=%B)
-          if [[ "$latest_commit_message" == *"BREAKING CHANGE"* ]]; then
-            increment="major"
-          elif [[ "$latest_commit_message" == *"feature"* ]]; then
-            increment="minor"
-          else
-            increment="patch"
-          fi
+          # Determine the increment based on commit messages
+          increment="patch"
+          while IFS= read -r line; do
+            if [[ "$line" =~ ^[[:space:]]*BREAKING CHANGE ]]; then
+              increment="major"
+              break
+            elif [[ "$line" =~ ^[[:space:]]*feat ]]; then
+              increment="minor"
+            fi
+          done < <(git log --pretty=%B -n 20)
 
+          # Increment version number accordingly
           case $increment in
             major)
               new_version="v$(($major + 1)).0.0"
@@ -92,7 +87,7 @@ jobs:
           fi
 
       - name: Create new tag
-        if: env.new_version != 'v0.0.0' && env.tag_exists == 'false'
+        if: env.new_version != 'v1.0.1' && env.tag_exists == 'false'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -105,7 +100,9 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image for production
+      - name: Build and push Docker image
+        id: docker_build
+        if: env.tag_exists == 'false'
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -113,24 +110,24 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}
           build-args: |
-              version=${{ env.new_version }}
-
-      - name: Build and push Docker image for development
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: ./Dockerfiledev
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:dev-${{ env.new_version }}
-          build-args: |
-              version=${{ env.new_version }}
+            version=${{ env.new_version }}
+          load: false
+          no-cache: false
+          pull: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          package_json_exist: ${{ env.package_json_exist }}
+          new_version: ${{ env.new_version }}
+          tag_exists: ${{ env.tag_exists }}
 
       - name: Store last successful version
-        if: always()
+        if: ${{ steps.docker_build.outputs.pushed }}
+
         run: echo ${{ env.new_version }} > last_successful_version.txt
 
       - name: Commit last successful version
-        if: success()
+        if: ${{ steps.docker_build.outputs.pushed }}
+
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -139,11 +136,13 @@ jobs:
           git push origin main
 
       - name: Save Docker image name
-        if: success()
+        if: ${{ steps.docker_build.outputs.pushed }}
+
         run: echo "${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}" > docker_image_name.txt
 
       - name: Commit Docker image name
-        if: success()
+        if: ${{ steps.docker_build.outputs.pushed }}
+
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
