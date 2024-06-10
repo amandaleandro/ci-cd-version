@@ -1,76 +1,26 @@
-name: Docker Build & Push
+FROM node:18.18-alpine3.18 as production
 
-on:
-  push:
-    branches:
-      - main
+ARG version
+ENV version=${version}
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+USER node
 
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v2
+RUN mkdir -p /home/node/app
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+WORKDIR /home/node/app
 
-      - name: Determine version
-        id: determine_version
-        run: |
-          # Determine the latest version from the file or set a default
-          if [ -f last_successful_version.txt ]; then
-              latest_version=$(cat last_successful_version.txt)
-          else
-              latest_version="v1.0.1"
-          fi
-  
-          # Split the version number into major, minor, and patch
-          IFS='.' read -r major minor patch <<< "${latest_version#v}"
-  
-          # Determine the increment based on commit messages
-          increment="patch"
-          while IFS= read -r line; do
-              if [[ "$line" =~ ^[[:space:]]*BREAKING[[:space:]]+CHANGE ]]; then
-                  increment="major"
-                  break
-              elif [[ "$line" =~ ^[[:space:]]*feat ]]; then
-                  increment="minor"
-              fi
-          done < <(git log --pretty=%B -n 20)
-  
-          # Increment version number accordingly
-          case $increment in
-              major)
-                  new_version="v$((major + 1)).0.0"
-                  ;;
-              minor)
-                  new_version="v$major.$((minor + 1)).0"
-                  ;;
-              patch)
-                  new_version="v$major.$minor.$((patch + 1))"
-                  ;;
-          esac
-  
-          # Set the new version as an output variable for GitHub Actions
-          echo "new_version=$new_version" >> $GITHUB_ENV
-          echo "new_version=$new_version"
+COPY --from=production --chown=node:node /home/node/app/package*.json ./
+COPY --from=production --chown=node:node /home/node/app/package-lock.json ./
 
-      - name: Store last successful version
-        if: ${{ steps.determine_version.outputs.new_version != 'v1.0.1' }}
-        run: echo ${{ env.new_version }} > last_successful_version.txt
+RUN npm ci
 
-      - name: Commit last successful version
-        if: ${{ steps.determine_version.outputs.new_version != 'v1.0.1' }}
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add last_successful_version.txt
-          git commit -m "Update last successful version to ${{ env.new_version }}"
-          git push origin main
+COPY --from=production --chown=node:node /home/node/app .
 
-      - name: Build and push Docker image
-        run: |
-          docker build --build-arg version=${{ env.new_version }} -t ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}:${{ env.new_version }} .
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}:${{ env.new_version }}
+EXPOSE 3000
+
+ENV TZ=America/Sao_Paulo
+
+ENV NODE_ENV=prod
+
+# CMD [ "npm", "run", "start:prod" ]
+CMD ./node_modules/.bin/ts-node ./node_modules/.bin/typeorm migration:run -d src/orm/config/ormconfig.prod.ts && npm run start:prod
