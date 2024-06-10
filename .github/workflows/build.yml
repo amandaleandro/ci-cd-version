@@ -72,5 +72,5 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build --build-arg version=${{ env.new_version }} -t ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}:${{ env.new_version }} .
+          docker build --build-arg version=${{ env.new_version }} -t ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}:${{ env.new_version }} --target base .
           docker push ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}:${{ env.new_version }}
