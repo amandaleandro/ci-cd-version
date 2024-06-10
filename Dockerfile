@@ -14,7 +14,7 @@ WORKDIR /home/node/app
 
 # Copiando os arquivos de manifesto e instalando dependências
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 
 # Copiando o restante dos arquivos da aplicação
 COPY . .
