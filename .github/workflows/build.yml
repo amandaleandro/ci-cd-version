@@ -16,35 +16,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Validate Dockerfile
-        run: |
-          if [ -f Dockerfile ]; then
-            echo "Dockerfile validation passed."
-          else
-            echo "Dockerfile not found."
-            exit 1
-          fi
-
-      - name: Check if package.json exists
-        id: check_package_json
-        run: |
-          if [ -f "package.json" ]; then
-            echo "package_json_exist=true" >> $GITHUB_ENV
-          else
-            echo "package_json_exist=false" >> $GITHUB_ENV
-          fi
-
-      - name: Run tests and install dependencies
-        if: env.package_json_exist == 'true'
-        run: |
-          npm install
-          npm test || echo "Tests failed, but continuing the pipeline."
-
       - name: Determine version
         id: determine_version
         run: |
-          #!/usr/bin/env bash
-  
           # Determine the latest version from the file or set a default
           if [ -f last_successful_version.txt ]; then
               latest_version=$(cat last_successful_version.txt)
