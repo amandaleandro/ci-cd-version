@@ -1,97 +1,51 @@
-name: Docker Build & Push
-on:
-  push:
-    branches:
-      - main
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v2
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      - name: Validate Dockerfile
-        run: docker build --pull --no-cache -t ${{ github.repository }}:${{ github.ref_name }} -f Dockerfile .
-      - name: Check if package.json exists
-        id: check_package_json
-        run: |
-          if [ -f "package.json" ]; then
-            echo "package_json_exist=true" >> $GITHUB_ENV
-          else
-            echo "package_json_exist=false" >> $GITHUB_ENV
-      - name: Run tests and install dependencies
-        if: env.package_json_exist == 'true'
-        run: |
-          npm install
-          npm test
-      - name: Determine version
-        id: determine_version
-        run: |
-          if [ -f last_successful_version.txt ]; then
-            latest_version=$(cat last_successful_version.txt)
-          else
-            latest_version="v0.0.0"
-          fi
-          IFS='.' read -r major minor patch <<< "${latest_version#v}"
-          latest_commit_message=$(git log -1 --pretty=%B)
-          if [[ "$latest_commit_message" == *"BREAKING CHANGE"* ]]; then
-            increment="major"
-          elif [[ "$latest_commit_message" == *"feature"* ]]; then
-            increment="minor"
-          else
-            increment="patch"
-          fi
-          case $increment in
-            major)
-              new_version="v$(($major + 1)).0.0"
-              ;;
-            minor)
-              new_version="v$major.$(($minor + 1)).0"
-              ;;
-            patch)
-              new_version="v$major.$minor.$(($patch + 1))"
-              ;;
-          esac
-          echo "new_version=$new_version" >> $GITHUB_ENV
-          echo "new_version=$new_version"
-      - name: Create new tag
-        if: env.new_version != 'v0.0.0'
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git tag ${{ env.new_version }}
-          git push origin ${{ env.new_version }}
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}
-          build-args: |
-              version=${{ env.new_version }}
-      - name: Store last successful version
-        if: always()
-        run: echo ${{ env.new_version }} > last_successful_version.txt
-      - name: Commit last successful version
-        if: success()
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add last_successful_version.txt
-          git commit -m "Update last successful version to ${{ env.new_version }}"
-          git push origin main
-      - name: Save Docker image name
-        if: success()
-        run: echo "${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}" > docker_image_name.txt
-      - name: Commit Docker image name
-        if: success()
-        run: |
-          git config user.name "github-actions"
-          git c
+# Estágio de construção
+FROM node:18.18-alpine3.18 as build
+
+# Definindo o argumento de versão
+ARG version
+ENV version=${version}
+
+# Definindo o usuário de trabalho
+USER node
+
+# Criando o diretório de trabalho
+RUN mkdir -p /home/node/app
+WORKDIR /home/node/app
+
+# Copiando os arquivos de manifesto e instalando dependências
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Copiando o restante dos arquivos da aplicação
+COPY . .
+
+# Construindo a aplicação
+RUN npm run build
+
+# Estágio de produção
+FROM node:18.18-alpine3.18 as production
+
+# Definindo o usuário de trabalho
+USER node
+
+# Criando o diretório de trabalho
+RUN mkdir -p /home/node/app
+WORKDIR /home/node/app
+
+# Copiando apenas os artefatos necessários da etapa de construção
+COPY --from=build /home/node/app/package*.json ./
+COPY --from=build /home/node/app/package-lock.json ./
+COPY --from=build /home/node/app/dist ./dist
+
+# Instalando apenas as dependências de produção
+RUN npm ci --only=production
+
+# Expondo a porta da aplicação
+EXPOSE 3000
+
+# Configurando o fuso horário e o ambiente Node.js
+ENV TZ=America/Sao_Paulo
+ENV NODE_ENV=prod
+
+# Comando de execução da aplicação
+CMD ./node_modules/.bin/ts-node ./node_modules/.bin/typeorm migration:run -d src/orm/config/ormconfig.prod.ts && npm run start:prod
