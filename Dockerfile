@@ -22,5 +22,4 @@ ENV TZ=America/Sao_Paulo
 
 ENV NODE_ENV=prod
 
-# CMD [ "npm", "run", "start:prod" ]
 CMD ./node_modules/.bin/ts-node ./node_modules/.bin/typeorm migration:run -d src/orm/config/ormconfig.prod.ts && npm run start:prod
