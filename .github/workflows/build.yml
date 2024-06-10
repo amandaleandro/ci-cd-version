@@ -96,6 +96,15 @@ jobs:
           git commit -m "Update last successful version to ${{ env.new_version }}"
           git push origin main
 
+      - name: Check if Dockerfile.intermediate exists
+        run: |
+          if [ -f Dockerfile.intermediate ]; then
+            echo "Dockerfile.intermediate found."
+          else
+            echo "Dockerfile.intermediate not found."
+            exit 1
+          fi
+
       - name: Build intermediate Docker image
         run: |
           docker build -t intermediate-image:latest -f Dockerfile.intermediate .
