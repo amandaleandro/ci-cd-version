@@ -40,85 +40,46 @@ jobs:
           npm install
           npm test || echo "Tests failed, but continuing the pipeline."
 
-      - name: Determine version
-        id: determine_version
-        run: |
-          if [ -f last_successful_version.txt ]; then
-            latest_version=$(cat last_successful_version.txt)
-          else
-            latest_version="v1.0.1"
-          fi
+    - name: Determine version
+  id: determine_version
+  run: |
+    if [ -f last_successful_version.txt ]; then
+      latest_version=$(cat last_successful_version.txt)
+    else
+      latest_version="v1.0.1"
+    fi
 
-          IFS='.' read -r major minor patch <<< "${latest_version#v}"
+    IFS='.' read -r major minor patch <<< "${latest_version#v}"
 
-          # Determine the increment based on commit messages
-          increment="patch"
-          while IFS= read -r line; do
-            if [[ "$line" =~ ^[[:space:]]*BREAKING CHANGE ]]; then
-              increment="major"
-              break
-            elif [[ "$line" =~ ^[[:space:]]*feat ]]; then
-              increment="minor"
-            fi
-          done < <(git log --pretty=%B -n 20)
+    # Determine the increment based on commit messages
+    increment="patch"
+    while IFS= read -r line; do
+      if [[ "$line" =~ ^[[:space:]]*BREAKING CHANGE ]]; then
+        increment="major"
+        break
+      elif [[ "$line" =~ ^[[:space:]]*feat ]]; then
+        increment="minor"
+      fi
+    done < <(git log --pretty=%B -n 20)
 
-          # Increment version number accordingly
-          case $increment in
-            major)
-              new_version="v$(($major + 1)).0.0"
-              ;;
-            minor)
-              new_version="v$major.$(($minor + 1)).0"
-              ;;
-            patch)
-              new_version="v$major.$minor.$(($patch + 1))"
-              ;;
-          esac
-          echo "new_version=$new_version" >> $GITHUB_ENV
-          echo "new_version=$new_version"
+    # Increment version number accordingly
+    case $increment in
+      major)
+        new_version="v$(($major + 1)).0.0"
+        ;;
+      minor)
+        new_version="v$major.$(($minor + 1)).0"
+        ;;
+      patch)
+        new_version="v$major.$minor.$(($patch + 1))"
+        ;;
+    esac
+    echo "new_version=$new_version" >> $GITHUB_ENV
+    echo "new_version=$new_version"
+  shell: bash
+  env:
+    package_json_exist: false
 
-      - name: Check if tag already exists
-        id: check_tag
-        run: |
-          if git rev-parse "refs/tags/${{ env.new_version }}" >/dev/null 2>&1; then
-            echo "tag_exists=true" >> $GITHUB_ENV
-          else
-            echo "tag_exists=false" >> $GITHUB_ENV
-          fi
-
-      - name: Create new tag
-        if: env.new_version != 'v1.0.1' && env.tag_exists == 'false'
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git tag ${{ env.new_version }}
-          git push origin ${{ env.new_version }}
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and push Docker image
-        id: docker_build
-        if: env.tag_exists == 'false'
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-version:${{ env.new_version }}
-          build-args: |
-            version=${{ env.new_version }}
-          load: false
-          no-cache: false
-          pull: false
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          package_json_exist: ${{ env.package_json_exist }}
-          new_version: ${{ env.new_version }}
-          tag_exists: ${{ env.tag_exists }}
 
       - name: Store last successful version
         if: ${{ steps.docker_build.outputs.pushed }}
