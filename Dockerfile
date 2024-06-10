@@ -1,25 +1,23 @@
-FROM node:18.18-alpine3.18 as production
+FROM node:18.18-alpine3.18
 
-arg version
+ARG version
 
-env version=${version}
+ENV version=${version}
 
-user node
+USER node
 
-run mkdir -p /home/node/app
+RUN mkdir -p /home/node/app
 
-workdir /home/node/app
+WORKDIR /home/node/app
 
-copy --from=production --chown=node:node /home/node/app/package*.json ./
-run npm ci --omit=dev
+COPY package*.json ./
+RUN npm ci --omit=dev
 
-copy --from=production --chown=node:node /home/node/app .
+COPY . .
 
-expose 3000
+EXPOSE 3000
 
-env tz=america/sao_paulo
+ENV TZ=America/Sao_Paulo
+ENV NODE_ENV=prod
 
-env node_env=prod
-
-# CMD [ "npm", "run", "start:prod" ]
 CMD ./node_modules/.bin/ts-node ./node_modules/.bin/typeorm migration:run -d src/orm/config/ormconfig.prod.ts && npm run start:prod
