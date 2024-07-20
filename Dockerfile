@@ -6,11 +6,11 @@ RUN mkdir -p /home/node/app
 WORKDIR /home/node/app
 
 # Copiando os arquivos de manifesto e instalando dependências
-COPY package*.json ./
+COPY package*.json /home/node/app/
 RUN npm install
 
 # Copiando o restante dos arquivos da aplicação
-COPY . .
+COPY . /home/node/app
 
 # Construindo a aplicação
 RUN npm run build
