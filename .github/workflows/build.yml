@@ -19,21 +19,20 @@ jobs:
       - name: Determine last successful version
         id: determine_version
         run: |
-          # Verifica se há tags no repositório
-          if git rev-parse --quiet --verify "refs/tags/*" > /dev/null; then
-            latest_version=$(git describe --tags $(git rev-list --tags --max-count=1))
-          else
-            latest_version="v0.0.0"
-          fi
+          # Obtém a última tag
+          latest_version=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null || echo "v0.0.0")
 
+          # Se a versão não estiver definida, define como v0.0.0
           if [ -z "$latest_version" ]; then
             latest_version="v0.0.0"
           fi
 
           IFS='.' read -r major minor patch <<< "${latest_version#v}"
 
+          # Obtém a última mensagem de commit
           latest_commit_message=$(git log -1 --pretty=%B)
 
+          # Determina o tipo de incremento
           if [[ "$latest_commit_message" == *"BREAKING CHANGE"* ]]; then
             increment="major"
           elif [[ "$latest_commit_message" == *"feature"* ]]; then
@@ -42,6 +41,7 @@ jobs:
             increment="patch"
           fi
 
+          # Calcula a nova versão
           case $increment in
             major)
               new_version="v$(($major + 1)).0.0"
@@ -62,8 +62,14 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git tag ${{ env.new_version }}
-          git push origin ${{ env.new_version }}
+
+          # Verifica se a tag já existe
+          if git rev-parse "$GITHUB_REF" >/dev/null 2>&1; then
+            echo "Tag ${{ env.new_version }} already exists. Skipping creation."
+          else
+            git tag ${{ env.new_version }}
+            git push origin ${{ env.new_version }}
+          fi
 
       - name: Validate Dockerfile
         if: env.new_version != 'v0.0.0'
