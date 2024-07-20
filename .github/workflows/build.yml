@@ -29,8 +29,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Validate Dockerfile for Production
-        run: docker build --pull --no-cache -t ${{ github.repository }}:${{ github.ref_name }} -f Dockerfile.prod .
+      - name: Validate Dockerfile
+        run: docker build --pull --no-cache -t ${{ github.repository }}:${{ github.ref_name }} .
 
       - name: Determine last successful version
         id: determine_version
