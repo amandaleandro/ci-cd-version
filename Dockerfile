@@ -1,20 +1,13 @@
 # Estágio de construção
-FROM node:18.18-alpine3.18 as build
+FROM node:18.18-alpine3.18 AS build
 
-# Definindo o argumento de versão
-ARG version
-ENV version=${version}
-
-# Definindo o usuário de trabalho
-USER node
-
-# Criando o diretório de trabalho
+# Criando diretório de trabalho
 RUN mkdir -p /home/node/app
 WORKDIR /home/node/app
 
 # Copiando os arquivos de manifesto e instalando dependências
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Copiando o restante dos arquivos da aplicação
 COPY . .
@@ -23,29 +16,17 @@ COPY . .
 RUN npm run build
 
 # Estágio de produção
-FROM node:18.18-alpine3.18 as production
+FROM node:18.18-alpine3.18
 
-# Definindo o usuário de trabalho
-USER node
-
-# Criando o diretório de trabalho
+# Criando diretório de trabalho
 RUN mkdir -p /home/node/app
 WORKDIR /home/node/app
 
-# Copiando apenas os artefatos necessários da etapa de construção
-COPY --from=build /home/node/app/package*.json ./
-COPY --from=build /home/node/app/package-lock.json ./
-COPY --from=build /home/node/app/dist ./dist
+# Copiando apenas os arquivos necessários para produção
+COPY --from=build /home/node/app .
 
-# Instalando apenas as dependências de produção
-RUN npm ci --only=production
-
-# Expondo a porta da aplicação
+# Expondo a porta que a aplicação irá rodar
 EXPOSE 3000
 
-# Configurando o fuso horário e o ambiente Node.js
-ENV TZ=America/Sao_Paulo
-ENV NODE_ENV=prod
-
-# Comando de execução da aplicação
-CMD ./node_modules/.bin/ts-node ./node_modules/.bin/typeorm migration:run -d src/orm/config/ormconfig.prod.ts && npm run start:prod
+# Comando para rodar a aplicação
+CMD [ "npm", "start" ]
