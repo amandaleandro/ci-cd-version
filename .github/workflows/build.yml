@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Check if package.json exists
         id: check_package_json
@@ -27,20 +27,16 @@ jobs:
         run: npm install
 
       - name: Set up Docker Buildx
-        if: env.package_json_exist == 'true'
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
       - name: Validate Dockerfile for Production
-        if: env.package_json_exist == 'true'
         run: docker build --pull --no-cache -t ${{ github.repository }}:${{ github.ref_name }} -f Dockerfile.prod .
 
-      - name: Determine version
-        if: env.package_json_exist == 'true'
+      - name: Determine last successful version
         id: determine_version
         run: |
-          if [ -f last_successful_version.txt ]; then
-            latest_version=$(cat last_successful_version.txt)
-          else
+          latest_version=$(git describe --tags `git rev-list --tags --max-count=1`)
+          if [ -z "$latest_version" ]; then
             latest_version="v0.0.0"
           fi
           IFS='.' read -r major minor patch <<< "${latest_version#v}"
@@ -67,7 +63,7 @@ jobs:
           echo "new_version=$new_version"
 
       - name: Create new tag
-        if: env.new_version != 'v0.0.0' && env.package_json_exist == 'true'
+        if: env.new_version != 'v0.0.0'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -75,15 +71,13 @@ jobs:
           git push origin ${{ env.new_version }}
 
       - name: Login to DockerHub
-        if: env.package_json_exist == 'true'
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image
-        if: env.package_json_exist == 'true'
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
@@ -91,29 +85,3 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/${{ github.repository }}:${{ env.new_version }}
           build-args: |
             version=${{ env.new_version }}
-
-      - name: Store last successful version
-        if: always()
-        run: echo ${{ env.new_version }} > last_successful_version.txt
-
-      - name: Commit last successful version
-        if: success() && env.package_json_exist == 'true'
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add last_successful_version.txt
-          git commit -m "Update last successful version to ${{ env.new_version }}"
-          git push origin main
-
-      - name: Save Docker image name
-        if: success() && env.package_json_exist == 'true'
-        run: echo "${{ secrets.DOCKER_USERNAME }}/${{ github.repository }}:${{ env.new_version }}" > docker_image_name.txt
-
-      - name: Commit Docker image name
-        if: success() && env.package_json_exist == 'true'
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add docker_image_name.txt
-          git commit -m "Save Docker image name"
-          git push origin main
