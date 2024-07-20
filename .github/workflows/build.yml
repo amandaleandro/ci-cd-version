@@ -13,19 +13,6 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v3
 
-      - name: Check if package.json exists
-        id: check_package_json
-        run: |
-          if [ -f "package.json" ]; then
-            echo "package_json_exist=true" >> $GITHUB_ENV
-          else
-            echo "package_json_exist=false" >> $GITHUB_ENV
-          fi
-
-      - name: Run npm install
-        if: env.package_json_exist == 'true'
-        run: npm install
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
